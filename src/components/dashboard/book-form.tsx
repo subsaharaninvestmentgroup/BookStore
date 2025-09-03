@@ -17,6 +17,7 @@ import { v4 as uuidv4 } from 'uuid';
 import type { Book, SupplementaryFile } from '@/lib/types';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '../ui/dialog';
 import { ScrollArea } from '../ui/scroll-area';
+import { clearCache } from '@/lib/utils';
 
 type UploadableFile = {
     file: File;
@@ -159,6 +160,11 @@ export function BookForm({ bookId, onSaveSuccess, onCancel }: BookFormProps) {
       } else {
         await addDoc(collection(db, 'books'), bookData);
         toast({ title: 'Success', description: 'Book added successfully.' });
+      }
+      clearCache('allBooks');
+      clearCache('storefront');
+      if (bookId) {
+        clearCache(`book_${bookId}`);
       }
       onSaveSuccess();
     } catch (error: any) {

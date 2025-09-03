@@ -12,6 +12,7 @@ import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious
 import { Button } from '@/components/ui/button';
 import { BookCard } from '@/components/store/book-card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { getCachedData, setCachedData } from '@/lib/utils';
 
 export default function StorefrontPage() {
     const [banners, setBanners] = React.useState<Banner[]>([]);
@@ -21,6 +22,14 @@ export default function StorefrontPage() {
     React.useEffect(() => {
         const fetchData = async () => {
             setLoading(true);
+            const cachedData = getCachedData('storefront');
+            if (cachedData) {
+                setBanners(cachedData.banners);
+                setFeaturedBooks(cachedData.featuredBooks);
+                setLoading(false);
+                return;
+            }
+
             try {
                 // Fetch banners
                 const bannerQuery = query(collection(db, 'banners'), where('isActive', '==', true));
@@ -33,6 +42,8 @@ export default function StorefrontPage() {
                 const booksSnapshot = await getDocs(booksQuery);
                 const booksData = booksSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })) as Book[];
                 setFeaturedBooks(booksData);
+                
+                setCachedData('storefront', { banners: bannersData, featuredBooks: booksData });
 
             } catch (error) {
                 console.error("Failed to fetch storefront data:", error);

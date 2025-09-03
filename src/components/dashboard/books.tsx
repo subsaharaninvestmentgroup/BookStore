@@ -38,7 +38,7 @@ import { collection, deleteDoc, doc, getDocs } from 'firebase/firestore';
 import { deleteObject, ref } from 'firebase/storage';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
-import { getCurrencySymbol } from '@/lib/utils';
+import { getCurrencySymbol, getCachedData, setCachedData, clearCache } from '@/lib/utils';
 
 type BooksProps = {
     onAddBook: () => void;
@@ -59,10 +59,18 @@ export default function Books({ onAddBook, onEditBook }: BooksProps) {
 
   const fetchBooks = React.useCallback(async () => {
     setLoading(true);
+    const cachedBooks = getCachedData('allBooks');
+    if (cachedBooks) {
+        setBooks(cachedBooks);
+        setLoading(false);
+        return;
+    }
+
     try {
         const querySnapshot = await getDocs(collection(db, 'books'));
         const booksData = querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })) as Book[];
         setBooks(booksData);
+        setCachedData('allBooks', booksData);
     } catch(error: any) {
         toast({
             variant: 'destructive',
@@ -106,6 +114,8 @@ export default function Books({ onAddBook, onEditBook }: BooksProps) {
         // Delete book from firestore
         await deleteDoc(doc(db, 'books', bookId));
         toast({ title: 'Success', description: 'Book deleted successfully.' });
+        clearCache('allBooks');
+        clearCache(`book_${bookId}`);
         fetchBooks();
     } catch (error: any) {
         toast({
@@ -165,14 +175,14 @@ export default function Books({ onAddBook, onEditBook }: BooksProps) {
                 Export
                 </span>
               </Button>
-              <Link href="/store">
-                <Button size="sm" variant="outline" className="h-8 gap-1 w-full sm:w-auto">
-                  <Store className="h-3.5 w-3.5" />
-                  <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                  View Storefront
-                  </span>
-                </Button>
-              </Link>
+              <Button asChild size="sm" variant="outline" className="h-8 gap-1 w-full sm:w-auto">
+                <Link href="/store">
+                    <Store className="h-3.5 w-3.5" />
+                    <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                    View Storefront
+                    </span>
+                </Link>
+              </Button>
               <Button size="sm" className="h-8 gap-1 w-full sm:w-auto" onClick={onAddBook}>
                 <PlusCircle className="h-3.5 w-3.5" />
                 <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">

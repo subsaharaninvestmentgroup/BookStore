@@ -40,7 +40,7 @@ import {
 import { db } from '@/lib/firebase';
 import { collection, getDocs, doc, updateDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
-import { getCurrencySymbol } from '@/lib/utils';
+import { getCurrencySymbol, getCachedData, setCachedData, clearCache } from '@/lib/utils';
 
 type ShippingStatus = Order['shippingStatus'];
 const shippingStatuses: ShippingStatus[] = ['Processing', 'Shipped', 'Delivered', 'Cancelled'];
@@ -59,10 +59,17 @@ export default function Orders() {
 
   const fetchOrders = React.useCallback(async () => {
     setLoading(true);
+    const cachedOrders = getCachedData('orders');
+    if (cachedOrders) {
+        setOrders(cachedOrders);
+        setLoading(false);
+        return;
+    }
     try {
         const querySnapshot = await getDocs(collection(db, 'orders'));
         const ordersData = querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })) as Order[];
         setOrders(ordersData);
+        setCachedData('orders', ordersData);
     } catch(error: any) {
         toast({
             variant: 'destructive',
@@ -82,7 +89,10 @@ export default function Orders() {
     const orderRef = doc(db, 'orders', orderId);
     try {
         await updateDoc(orderRef, { shippingStatus: status });
-        setOrders(orders.map(o => o.id === orderId ? { ...o, shippingStatus: status } : o));
+        const updatedOrders = orders.map(o => o.id === orderId ? { ...o, shippingStatus: status } : o);
+        setOrders(updatedOrders);
+        setCachedData('orders', updatedOrders); // Update cache
+        clearCache('dashboardOverview'); // Invalidate overview cache
         toast({ title: 'Success', description: 'Order status updated.'});
     } catch (error: any) {
         toast({

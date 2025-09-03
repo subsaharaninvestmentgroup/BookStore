@@ -16,7 +16,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion"
-import { getCurrencySymbol } from '@/lib/utils';
+import { getCurrencySymbol, getCachedData, setCachedData } from '@/lib/utils';
 
 
 export default function BookPage({ params }: { params: { id: string } }) {
@@ -30,17 +30,27 @@ export default function BookPage({ params }: { params: { id: string } }) {
     }, []);
 
     React.useEffect(() => {
-        const bookId = params.id;
-        if (!bookId) return;
+        if (!params.id) return;
 
         const fetchBook = async () => {
             setLoading(true);
+            const cacheKey = `book_${params.id}`;
+            const cachedBook = getCachedData(cacheKey);
+
+            if(cachedBook) {
+                setBook(cachedBook);
+                setLoading(false);
+                return;
+            }
+
             try {
-                const docRef = doc(db, 'books', bookId);
+                const docRef = doc(db, 'books', params.id);
                 const docSnap = await getDoc(docRef);
 
                 if (docSnap.exists()) {
-                    setBook({ ...docSnap.data(), id: docSnap.id } as Book);
+                    const bookData = { ...docSnap.data(), id: docSnap.id } as Book;
+                    setBook(bookData);
+                    setCachedData(cacheKey, bookData);
                 } else {
                    setBook(null);
                 }

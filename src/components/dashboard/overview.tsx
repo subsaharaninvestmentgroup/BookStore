@@ -31,7 +31,7 @@ import { collection, getDocs, limit, orderBy, query } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Order, Book } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { getCurrencySymbol } from '@/lib/utils';
+import { getCurrencySymbol, getCachedData, setCachedData } from '@/lib/utils';
 
 const chartData = [
   { month: "January", total: 0 },
@@ -72,35 +72,63 @@ export default function Overview() {
 
     const fetchData = async () => {
       setLoading(true);
+      const cachedData = getCachedData('dashboardOverview');
+      if (cachedData) {
+        setTotalRevenue(cachedData.totalRevenue);
+        setTotalSales(cachedData.totalSales);
+        setTotalCustomers(cachedData.totalCustomers);
+        setBestSeller(cachedData.bestSeller);
+        setRecentOrders(cachedData.recentOrders);
+        setSalesData(cachedData.salesData);
+        setLoading(false);
+        return;
+      }
       try {
         // Fetch Orders
         const ordersQuery = query(collection(db, 'orders'), orderBy('date', 'desc'));
         const ordersSnapshot = await getDocs(ordersQuery);
         const ordersData = ordersSnapshot.docs.map(doc => ({...doc.data(), id: doc.id})) as Order[];
         
-        const monthlySales = [...chartData];
+        const monthlySales = [...chartData].map(d => ({...d}));
         let revenue = 0;
         ordersData.forEach(order => {
           revenue += order.amount;
           const orderDate = new Date(order.date);
           const monthIndex = orderDate.getMonth();
-          monthlySales[monthIndex].total += order.amount;
+          if(monthlySales[monthIndex]) {
+            monthlySales[monthIndex].total += order.amount;
+          }
         });
+        const currentMonthSales = monthlySales.slice(0, new Date().getMonth() + 1)
+        
         setTotalRevenue(revenue);
         setTotalSales(ordersData.length);
-        setRecentOrders(ordersData.slice(0, 5));
-        setSalesData(monthlySales.slice(0, new Date().getMonth() + 1));
+        const slicedRecentOrders = ordersData.slice(0, 5)
+        setRecentOrders(slicedRecentOrders);
+        setSalesData(currentMonthSales);
 
         // Fetch Customers
         const customersSnapshot = await getDocs(collection(db, 'customers'));
-        setTotalCustomers(customersSnapshot.size);
+        const numCustomers = customersSnapshot.size;
+        setTotalCustomers(numCustomers);
 
         // Fetch Books for best seller
         const booksQuery = query(collection(db, 'books'), orderBy('stock', 'asc'), limit(1)); // Approximation of best seller
         const booksSnapshot = await getDocs(booksQuery);
+        let foundBestSeller: Book | null = null;
         if(!booksSnapshot.empty) {
-          setBestSeller(booksSnapshot.docs[0].data() as Book);
+          foundBestSeller = booksSnapshot.docs[0].data() as Book
+          setBestSeller(foundBestSeller);
         }
+        
+        setCachedData('dashboardOverview', {
+            totalRevenue: revenue,
+            totalSales: ordersData.length,
+            totalCustomers: numCustomers,
+            bestSeller: foundBestSeller,
+            recentOrders: slicedRecentOrders,
+            salesData: currentMonthSales,
+        });
 
       } catch (error: any) {
         toast({

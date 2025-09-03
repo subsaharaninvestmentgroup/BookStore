@@ -34,6 +34,7 @@ import { db, storage } from '@/lib/firebase';
 import { collection, deleteDoc, doc, getDocs } from 'firebase/firestore';
 import { deleteObject, ref } from 'firebase/storage';
 import { useToast } from '@/hooks/use-toast';
+import { getCachedData, setCachedData, clearCache } from '@/lib/utils';
 
 type BannersProps = {
     onAddBanner: () => void;
@@ -47,10 +48,18 @@ export default function Banners({ onAddBanner, onEditBanner }: BannersProps) {
 
   const fetchBanners = React.useCallback(async () => {
     setLoading(true);
+    const cachedBanners = getCachedData('banners');
+    if(cachedBanners) {
+        setBanners(cachedBanners);
+        setLoading(false);
+        return;
+    }
+
     try {
         const querySnapshot = await getDocs(collection(db, 'banners'));
         const bannersData = querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })) as Banner[];
         setBanners(bannersData);
+        setCachedData('banners', bannersData);
     } catch(error: any) {
         toast({
             variant: 'destructive',
@@ -82,6 +91,7 @@ export default function Banners({ onAddBanner, onEditBanner }: BannersProps) {
         }
         await deleteDoc(doc(db, 'banners', bannerId));
         toast({ title: 'Success', description: 'Banner deleted successfully.' });
+        clearCache('banners');
         fetchBanners();
     } catch (error: any) {
         toast({

@@ -18,6 +18,7 @@ import type { Banner, Book } from '@/lib/types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Switch } from '../ui/switch';
 import { generateBannerAction } from '@/app/actions';
+import { clearCache } from '@/lib/utils';
 
 type BannerFormProps = {
     bannerId?: string;
@@ -168,6 +169,8 @@ export function BannerForm({ bannerId, onSaveSuccess, onCancel }: BannerFormProp
         await addDoc(collection(db, 'banners'), bannerData);
         toast({ title: 'Success', description: 'Banner added successfully.' });
       }
+      clearCache('banners');
+      clearCache('storefront');
       onSaveSuccess();
     } catch (error: any) {
       toast({ variant: 'destructive', title: 'Error', description: `Failed to save banner: ${error.message}` });

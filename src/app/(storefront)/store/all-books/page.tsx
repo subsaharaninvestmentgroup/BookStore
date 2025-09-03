@@ -8,6 +8,7 @@ import { collection, getDocs } from 'firebase/firestore';
 import { BookCard } from '@/components/store/book-card';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { getCachedData, setCachedData } from '@/lib/utils';
 
 export default function AllBooksPage() {
     const [books, setBooks] = React.useState<Book[]>([]);
@@ -16,10 +17,18 @@ export default function AllBooksPage() {
     React.useEffect(() => {
         const fetchBooks = async () => {
             setLoading(true);
+            const cachedBooks = getCachedData('allBooks');
+            if (cachedBooks) {
+                setBooks(cachedBooks);
+                setLoading(false);
+                return;
+            }
+
             try {
                 const querySnapshot = await getDocs(collection(db, 'books'));
                 const booksData = querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })) as Book[];
                 setBooks(booksData);
+                setCachedData('allBooks', booksData);
             } catch (error) {
                 console.error("Failed to fetch books:", error);
             } finally {

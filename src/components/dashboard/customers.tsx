@@ -40,7 +40,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
-import { getCurrencySymbol } from '@/lib/utils';
+import { getCurrencySymbol, getCachedData, setCachedData } from '@/lib/utils';
 
 const CustomerDetailSheet = ({ customer, open, onOpenChange, currencySymbol }: { customer: Customer | null; open: boolean; onOpenChange: (open: boolean) => void, currencySymbol: string }) => {
     const [customerOrders, setCustomerOrders] = React.useState<Order[]>([]);
@@ -51,11 +51,19 @@ const CustomerDetailSheet = ({ customer, open, onOpenChange, currencySymbol }: {
         if (customer && open) {
             const fetchOrders = async () => {
                 setLoading(true);
+                const cacheKey = `orders_${customer.id}`;
+                const cachedOrders = getCachedData(cacheKey);
+                if (cachedOrders) {
+                    setCustomerOrders(cachedOrders);
+                    setLoading(false);
+                    return;
+                }
                 try {
                     const q = query(collection(db, 'orders'), where('customerEmail', '==', customer.email));
                     const querySnapshot = await getDocs(q);
                     const ordersData = querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })) as Order[];
                     setCustomerOrders(ordersData);
+                    setCachedData(cacheKey, ordersData);
                 } catch(error: any) {
                     toast({
                         variant: 'destructive',
@@ -159,10 +167,18 @@ export default function Customers() {
 
     const fetchCustomers = async () => {
         setLoading(true);
+        const cachedCustomers = getCachedData('customers');
+        if (cachedCustomers) {
+            setCustomers(cachedCustomers);
+            setLoading(false);
+            return;
+        }
+
         try {
             const querySnapshot = await getDocs(collection(db, 'customers'));
             const customersData = querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })) as Customer[];
             setCustomers(customersData);
+            setCachedData('customers', customersData);
         } catch(error: any) {
             toast({
                 variant: 'destructive',
