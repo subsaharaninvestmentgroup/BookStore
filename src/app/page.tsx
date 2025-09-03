@@ -14,7 +14,8 @@ import {
   ShoppingCart,
   Users,
   CheckCircle2,
-  AlertTriangle
+  AlertTriangle,
+  Store,
 } from 'lucide-react';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { useRouter } from 'next/navigation';
@@ -96,6 +97,7 @@ export default function DashboardPage() {
 
   const handleLogout = () => {
     signOut(auth);
+    router.push('/store');
   };
 
   const handleShowBookForm = (bookId?: string) => {
@@ -219,6 +221,18 @@ export default function DashboardPage() {
           </TooltipProvider>
         </nav>
         <nav className="mt-auto flex flex-col items-center gap-4 px-2 sm:py-5">
+         <TooltipProvider delayDuration={0}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Link href="/store" className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8">
+                  <Store className="h-5 w-5" />
+                  <span className="sr-only">Storefront</span>
+                </Link>
+              </TooltipTrigger>
+              <TooltipContent side={isCollapsed ? 'right' : 'top'}>Storefront</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button

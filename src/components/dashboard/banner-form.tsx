@@ -92,7 +92,7 @@ export function BannerForm({ bannerId, onSaveSuccess, onCancel }: BannerFormProp
   
   const handleSelectChange = (value: string) => {
     const bookId = value === 'none' ? '' : value;
-    setFormData(prev => ({ ...prev, bookId }));
+    setFormData(prev => ({ ...prev, bookId, callToAction: bookId ? `/book/${bookId}` : '' }));
     const book = books.find(b => b.id === bookId);
     setSelectedBook(book || null);
   };
@@ -233,7 +233,7 @@ export function BannerForm({ bannerId, onSaveSuccess, onCancel }: BannerFormProp
                             <Label htmlFor="callToAction">Call to Action URL</Label>
                              <div className="relative mt-1">
                                 <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                <Input id="callToAction" name="callToAction" placeholder="/books/book-id" value={formData.callToAction} onChange={handleChange} className="pl-9" />
+                                <Input id="callToAction" name="callToAction" placeholder="/book/book-id" value={formData.callToAction} onChange={handleChange} className="pl-9" />
                             </div>
                         </div>
                         <div className="sm:col-span-2">
