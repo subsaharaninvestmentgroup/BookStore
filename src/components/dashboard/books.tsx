@@ -244,7 +244,7 @@ export default function Books() {
                 </Card>
             </TabsContent>
         </Tabs>
-      {isFormOpen && <BookForm book={editingBook} onSave={handleSaveBook} onCancel={() => setIsFormОpen(false)} />}
+      {isFormOpen && <BookForm book={editingBook} onSave={handleSaveBook} onCancel={() => setIsFormOpen(false)} />}
     </Dialog>
   );
 }
