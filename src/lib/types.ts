@@ -9,6 +9,7 @@ export type Book = {
   publicationDate: string;
   details: string;
   imageUrl: string;
+  fileType?: string;
 };
 
 export type Order = {

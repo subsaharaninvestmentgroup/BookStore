@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { MoreHorizontal, PlusCircle, File, ListFilter } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, File, ListFilter, Upload } from 'lucide-react';
 import { books as initialBooks } from '@/lib/data';
 import type { Book } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
@@ -67,12 +67,12 @@ const BookForm = ({ book, onSave, onCancel }: { book?: Book | null, onSave: (boo
     setFormData(prev => ({ ...prev, [name]: type === 'number' ? parseFloat(value) || 0 : value }));
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setFormData(prev => ({ ...prev, imageUrl: reader.result as string }));
+        setFormData(prev => ({ ...prev, imageUrl: reader.result as string, fileType: file.type }));
       };
       reader.readAsDataURL(file);
     }
@@ -81,6 +81,8 @@ const BookForm = ({ book, onSave, onCancel }: { book?: Book | null, onSave: (boo
   const handleSubmit = () => {
     onSave(formData as Book);
   };
+  
+  const isImage = formData.fileType?.startsWith('image/');
 
   return (
     <DialogContent className="sm:max-w-3xl max-h-[90vh]">
@@ -132,21 +134,28 @@ const BookForm = ({ book, onSave, onCancel }: { book?: Book | null, onSave: (boo
                 onClick={() => fileInputRef.current?.click()}
               >
                   {formData.imageUrl ? (
-                      <Image src={formData.imageUrl} alt={formData.title || 'Book cover'} width={400} height={600} className="object-cover w-full h-full" />
+                      isImage ? (
+                        <Image src={formData.imageUrl} alt={formData.title || 'Book cover'} width={400} height={600} className="object-cover w-full h-full" />
+                      ) : (
+                        <div className='text-center text-sm text-muted-foreground p-4'>
+                          <File className="mx-auto h-12 w-12 text-gray-400" />
+                          <p className='mt-2'>File selected</p>
+                        </div>
+                      )
                   ) : (
                       <div className='text-center text-sm text-muted-foreground p-4'>
-                          <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="mx-auto text-gray-400"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
-                          <p className='mt-2'>Click to upload image</p>
+                          <Upload className="mx-auto h-12 w-12 text-gray-400" />
+                          <p className='mt-2'>Click to upload file</p>
                       </div>
                   )}
               </div>
               <Input
-                id="imageUrl"
-                name="imageUrl"
+                id="fileUpload"
+                name="fileUpload"
                 type="file"
-                accept="image/*"
+                accept="image/*,application/pdf,.doc,.docx,.ppt,.pptx"
                 ref={fileInputRef}
-                onChange={handleImageChange}
+                onChange={handleFileChange}
                 className="hidden"
               />
           </div>
