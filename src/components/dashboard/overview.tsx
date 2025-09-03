@@ -67,7 +67,7 @@ export default function Overview() {
   const [currencySymbol, setCurrencySymbol] = React.useState('$');
 
   React.useEffect(() => {
-    const savedCurrency = localStorage.getItem('bookstore-currency') || 'USD';
+    const savedCurrency = localStorage.getItem('bookstore-currency') || 'ZAR';
     setCurrencySymbol(getCurrencySymbol(savedCurrency));
 
     const fetchData = async () => {

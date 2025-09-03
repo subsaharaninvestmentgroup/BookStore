@@ -22,10 +22,8 @@ export default function Settings() {
     const { toast } = useToast();
 
     React.useEffect(() => {
-        const savedCurrency = localStorage.getItem('bookstore-currency');
-        if (savedCurrency) {
-            setCurrency(savedCurrency);
-        }
+        const savedCurrency = localStorage.getItem('bookstore-currency') || 'ZAR';
+        setCurrency(savedCurrency);
     }, []);
 
     const handleSaveSettings = () => {
