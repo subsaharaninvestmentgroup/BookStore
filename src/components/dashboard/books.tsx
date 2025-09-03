@@ -59,10 +59,22 @@ const BookForm = ({ book, onSave, onCancel }: { book?: Book | null, onSave: (boo
         imageUrl: '' 
     }
   );
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
     setFormData(prev => ({ ...prev, [name]: type === 'number' ? parseFloat(value) || 0 : value }));
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData(prev => ({ ...prev, imageUrl: reader.result as string }));
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleSubmit = () => {
@@ -113,20 +125,28 @@ const BookForm = ({ book, onSave, onCancel }: { book?: Book | null, onSave: (boo
             </div>
         </div>
         <div className='space-y-4'>
-            <div>
-                <Label htmlFor="imageUrl">Image URL</Label>
-                <Input id="imageUrl" name="imageUrl" placeholder="https://example.com/image.jpg" value={formData.imageUrl} onChange={handleChange} className='mt-1' />
-            </div>
-            <div className='aspect-[2/3] w-full bg-muted rounded-lg flex items-center justify-center overflow-hidden'>
+            <div
+              className='aspect-[2/3] w-full bg-muted rounded-lg flex items-center justify-center overflow-hidden cursor-pointer'
+              onClick={() => fileInputRef.current?.click()}
+            >
                 {formData.imageUrl ? (
                     <Image src={formData.imageUrl} alt={formData.title || 'Book cover'} width={400} height={600} className="object-cover w-full h-full" />
                 ) : (
                     <div className='text-center text-sm text-muted-foreground p-4'>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="mx-auto text-gray-400"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
-                        <p className='mt-2'>Image preview</p>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="mx-auto text-gray-400"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
+                        <p className='mt-2'>Click to upload image</p>
                     </div>
                 )}
             </div>
+            <Input
+              id="imageUrl"
+              name="imageUrl"
+              type="file"
+              accept="image/*"
+              ref={fileInputRef}
+              onChange={handleImageChange}
+              className="hidden"
+            />
         </div>
       </div>
       <DialogFooter>
@@ -302,3 +322,5 @@ export default function Books() {
     </Dialog>
   );
 }
+
+    
