@@ -209,7 +209,7 @@ export default function Books() {
               Manage your book catalog. View, edit, and add new books.
               </CardDescription>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-col sm:flex-row items-center gap-2">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm" className="h-8 gap-1 w-full sm:w-auto">
@@ -322,3 +322,5 @@ export default function Books() {
     </Dialog>
   );
 }
+
+    
