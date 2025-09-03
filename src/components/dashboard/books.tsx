@@ -44,6 +44,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '../ui/textarea';
 import Image from 'next/image';
+import { ScrollArea } from '../ui/scroll-area';
 
 const BookForm = ({ book, onSave, onCancel }: { book?: Book | null, onSave: (book: Book) => void, onCancel: () => void }) => {
   const [formData, setFormData] = React.useState<Partial<Book>>(
@@ -82,73 +83,75 @@ const BookForm = ({ book, onSave, onCancel }: { book?: Book | null, onSave: (boo
   };
 
   return (
-    <DialogContent className="sm:max-w-3xl">
+    <DialogContent className="sm:max-w-3xl max-h-[90vh]">
       <DialogHeader>
         <DialogTitle>{book ? 'Edit Book' : 'Add New Book'}</DialogTitle>
         <DialogDescription>
           {book ? 'Update the details of the book.' : 'Fill in the details for the new book.'}
         </DialogDescription>
       </DialogHeader>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 py-4">
-        <div className="md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
-            <div className='sm:col-span-2'>
-                <Label htmlFor="title">Title</Label>
-                <Input id="title" name="title" value={formData.title} onChange={handleChange} className="mt-1" />
-            </div>
-            <div className='sm:col-span-2'>
-                <Label htmlFor="author">Author</Label>
-                <Input id="author" name="author" value={formData.author} onChange={handleChange} className="mt-1" />
-            </div>
-            <div>
-                <Label htmlFor="category">Category</Label>
-                <Input id="category" name="category" value={formData.category} onChange={handleChange} className="mt-1" />
-            </div>
-            <div>
-                <Label htmlFor="publicationDate">Published Date</Label>
-                <Input id="publicationDate" name="publicationDate" type="date" value={formData.publicationDate} onChange={handleChange} className="mt-1" />
-            </div>
-            <div>
-                <Label htmlFor="price">Price</Label>
-                <Input id="price" name="price" type="number" value={formData.price} onChange={handleChange} className="mt-1" />
-            </div>
-            <div>
-                <Label htmlFor="stock">Stock</Label>
-                <Input id="stock" name="stock" type="number" value={formData.stock} onChange={handleChange} className="mt-1" />
-            </div>
-            <div className="sm:col-span-2">
-                <Label htmlFor="description">Description</Label>
-                <Textarea id="description" name="description" value={formData.description} onChange={handleChange} className="mt-1" />
-            </div>
-            <div className="sm:col-span-2">
-                <Label htmlFor="details">Details</Label>
-                <Input id="details" name="details" placeholder='e.g. Hardcover, 224 pages' value={formData.details} onChange={handleChange} className="mt-1" />
-            </div>
+      <ScrollArea className="pr-4 -mr-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 py-4">
+          <div className="md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
+              <div className='sm:col-span-2'>
+                  <Label htmlFor="title">Title</Label>
+                  <Input id="title" name="title" value={formData.title} onChange={handleChange} className="mt-1" />
+              </div>
+              <div className='sm:col-span-2'>
+                  <Label htmlFor="author">Author</Label>
+                  <Input id="author" name="author" value={formData.author} onChange={handleChange} className="mt-1" />
+              </div>
+              <div>
+                  <Label htmlFor="category">Category</Label>
+                  <Input id="category" name="category" value={formData.category} onChange={handleChange} className="mt-1" />
+              </div>
+              <div>
+                  <Label htmlFor="publicationDate">Published Date</Label>
+                  <Input id="publicationDate" name="publicationDate" type="date" value={formData.publicationDate} onChange={handleChange} className="mt-1" />
+              </div>
+              <div>
+                  <Label htmlFor="price">Price</Label>
+                  <Input id="price" name="price" type="number" value={formData.price} onChange={handleChange} className="mt-1" />
+              </div>
+              <div>
+                  <Label htmlFor="stock">Stock</Label>
+                  <Input id="stock" name="stock" type="number" value={formData.stock} onChange={handleChange} className="mt-1" />
+              </div>
+              <div className="sm:col-span-2">
+                  <Label htmlFor="description">Description</Label>
+                  <Textarea id="description" name="description" value={formData.description} onChange={handleChange} className="mt-1" />
+              </div>
+              <div className="sm:col-span-2">
+                  <Label htmlFor="details">Details</Label>
+                  <Input id="details" name="details" placeholder='e.g. Hardcover, 224 pages' value={formData.details} onChange={handleChange} className="mt-1" />
+              </div>
+          </div>
+          <div className='space-y-4'>
+              <div
+                className='aspect-[2/3] w-full bg-muted rounded-lg flex items-center justify-center overflow-hidden cursor-pointer'
+                onClick={() => fileInputRef.current?.click()}
+              >
+                  {formData.imageUrl ? (
+                      <Image src={formData.imageUrl} alt={formData.title || 'Book cover'} width={400} height={600} className="object-cover w-full h-full" />
+                  ) : (
+                      <div className='text-center text-sm text-muted-foreground p-4'>
+                          <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="mx-auto text-gray-400"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
+                          <p className='mt-2'>Click to upload image</p>
+                      </div>
+                  )}
+              </div>
+              <Input
+                id="imageUrl"
+                name="imageUrl"
+                type="file"
+                accept="image/*"
+                ref={fileInputRef}
+                onChange={handleImageChange}
+                className="hidden"
+              />
+          </div>
         </div>
-        <div className='space-y-4'>
-            <div
-              className='aspect-[2/3] w-full bg-muted rounded-lg flex items-center justify-center overflow-hidden cursor-pointer'
-              onClick={() => fileInputRef.current?.click()}
-            >
-                {formData.imageUrl ? (
-                    <Image src={formData.imageUrl} alt={formData.title || 'Book cover'} width={400} height={600} className="object-cover w-full h-full" />
-                ) : (
-                    <div className='text-center text-sm text-muted-foreground p-4'>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="mx-auto text-gray-400"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
-                        <p className='mt-2'>Click to upload image</p>
-                    </div>
-                )}
-            </div>
-            <Input
-              id="imageUrl"
-              name="imageUrl"
-              type="file"
-              accept="image/*"
-              ref={fileInputRef}
-              onChange={handleImageChange}
-              className="hidden"
-            />
-        </div>
-      </div>
+      </ScrollArea>
       <DialogFooter>
         <Button variant="outline" onClick={onCancel}>Cancel</Button>
         <Button onClick={handleSubmit}>Save changes</Button>
@@ -322,5 +325,3 @@ export default function Books() {
     </Dialog>
   );
 }
-
-    
