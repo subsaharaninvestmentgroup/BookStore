@@ -31,6 +31,7 @@ import { collection, getDocs, limit, orderBy, query } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Order, Book } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
+import { getCurrencySymbol } from '@/lib/utils';
 
 const chartData = [
   { month: "January", total: 0 },
@@ -63,8 +64,12 @@ export default function Overview() {
   const [salesData, setSalesData] = React.useState(chartData);
   const [loading, setLoading] = React.useState(true);
   const { toast } = useToast();
+  const [currencySymbol, setCurrencySymbol] = React.useState('$');
 
   React.useEffect(() => {
+    const savedCurrency = localStorage.getItem('bookstore-currency') || 'USD';
+    setCurrencySymbol(getCurrencySymbol(savedCurrency));
+
     const fetchData = async () => {
       setLoading(true);
       try {
@@ -137,7 +142,7 @@ export default function Overview() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${totalRevenue.toFixed(2)}</div>
+            <div className="text-2xl font-bold">{currencySymbol}{totalRevenue.toFixed(2)}</div>
             <p className="text-xs text-muted-foreground">
               Based on all orders
             </p>
@@ -198,7 +203,7 @@ export default function Overview() {
                 <BarChart data={salesData} margin={{ top: 20, right: 20, bottom: 5, left: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
                   <XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={8} fontSize={12} />
-                  <YAxis tickFormatter={(value) => `$${value/1000}k`} />
+                  <YAxis tickFormatter={(value) => `${currencySymbol}${value/1000}k`} />
                   <ChartTooltip content={<ChartTooltipContent />} />
                   <ChartLegend content={<ChartLegendContent />} />
                   <Bar dataKey="total" fill="var(--color-total)" radius={4} />
@@ -235,7 +240,7 @@ export default function Overview() {
                     <TableCell>
                       <Badge variant={order.shippingStatus === 'Delivered' ? 'default' : 'secondary'} className="capitalize">{order.shippingStatus}</Badge>
                     </TableCell>
-                    <TableCell className="text-right">${order.amount.toFixed(2)}</TableCell>
+                    <TableCell className="text-right">{currencySymbol}{order.amount.toFixed(2)}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>

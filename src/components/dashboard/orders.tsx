@@ -40,6 +40,7 @@ import {
 import { db } from '@/lib/firebase';
 import { collection, getDocs, doc, updateDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
+import { getCurrencySymbol } from '@/lib/utils';
 
 type ShippingStatus = Order['shippingStatus'];
 const shippingStatuses: ShippingStatus[] = ['Processing', 'Shipped', 'Delivered', 'Cancelled'];
@@ -49,6 +50,12 @@ export default function Orders() {
   const [loading, setLoading] = React.useState(true);
   const [activeTab, setActiveTab] = React.useState('all');
   const { toast } = useToast();
+  const [currencySymbol, setCurrencySymbol] = React.useState('$');
+
+  React.useEffect(() => {
+    const savedCurrency = localStorage.getItem('bookstore-currency') || 'USD';
+    setCurrencySymbol(getCurrencySymbol(savedCurrency));
+  }, []);
 
   const fetchOrders = React.useCallback(async () => {
     setLoading(true);
@@ -171,7 +178,7 @@ export default function Orders() {
                   <TableCell className="hidden md:table-cell">
                       {order.date}
                   </TableCell>
-                  <TableCell className="text-right">${order.amount.toFixed(2)}</TableCell>
+                  <TableCell className="text-right">{currencySymbol}{order.amount.toFixed(2)}</TableCell>
                   <TableCell>
                   <DropdownMenu>
                       <DropdownMenuTrigger asChild>

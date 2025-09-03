@@ -16,11 +16,18 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion"
+import { getCurrencySymbol } from '@/lib/utils';
 
 
 export default function BookPage({ params }: { params: { id: string } }) {
     const [book, setBook] = React.useState<Book | null>(null);
     const [loading, setLoading] = React.useState(true);
+    const [currencySymbol, setCurrencySymbol] = React.useState('$');
+
+     React.useEffect(() => {
+        const savedCurrency = localStorage.getItem('bookstore-currency') || 'USD';
+        setCurrencySymbol(getCurrencySymbol(savedCurrency));
+    }, []);
 
     React.useEffect(() => {
         const bookId = params.id;
@@ -97,7 +104,7 @@ export default function BookPage({ params }: { params: { id: string } }) {
                         </div>
                         <span className="text-sm text-muted-foreground">(123 reviews)</span>
                     </div>
-                     <div className="text-4xl font-bold">${book.price.toFixed(2)}</div>
+                     <div className="text-4xl font-bold">{currencySymbol}{book.price.toFixed(2)}</div>
                     
                     <p className="text-muted-foreground">{book.description}</p>
                    
@@ -108,7 +115,7 @@ export default function BookPage({ params }: { params: { id: string } }) {
 
                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Truck className="h-4 w-4" />
-                        <span>Free shipping on orders over $50</span>
+                        <span>Free shipping on orders over {currencySymbol}50</span>
                     </div>
 
                     <Accordion type="single" collapsible className="w-full">

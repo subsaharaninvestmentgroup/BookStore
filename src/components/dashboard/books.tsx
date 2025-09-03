@@ -38,6 +38,7 @@ import { collection, deleteDoc, doc, getDocs } from 'firebase/firestore';
 import { deleteObject, ref } from 'firebase/storage';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
+import { getCurrencySymbol } from '@/lib/utils';
 
 type BooksProps = {
     onAddBook: () => void;
@@ -49,6 +50,12 @@ export default function Books({ onAddBook, onEditBook }: BooksProps) {
   const [loading, setLoading] = React.useState(true);
   const [filter, setFilter] = React.useState('all');
   const { toast } = useToast();
+  const [currencySymbol, setCurrencySymbol] = React.useState('$');
+
+  React.useEffect(() => {
+    const savedCurrency = localStorage.getItem('bookstore-currency') || 'USD';
+    setCurrencySymbol(getCurrencySymbol(savedCurrency));
+  }, []);
 
   const fetchBooks = React.useCallback(async () => {
     setLoading(true);
@@ -227,7 +234,7 @@ export default function Books({ onAddBook, onEditBook }: BooksProps) {
                       <span className="text-muted-foreground">Out of stock</span>
                   )}
                   </TableCell>
-                  <TableCell className="text-right">${book.price.toFixed(2)}</TableCell>
+                  <TableCell className="text-right">{currencySymbol}{book.price.toFixed(2)}</TableCell>
                   <TableCell>
                   <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -266,5 +273,3 @@ export default function Books({ onAddBook, onEditBook }: BooksProps) {
       </Card>
   );
 }
-
-    

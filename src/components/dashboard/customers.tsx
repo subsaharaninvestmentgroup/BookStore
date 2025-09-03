@@ -40,8 +40,9 @@ import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
+import { getCurrencySymbol } from '@/lib/utils';
 
-const CustomerDetailSheet = ({ customer, open, onOpenChange }: { customer: Customer | null; open: boolean; onOpenChange: (open: boolean) => void }) => {
+const CustomerDetailSheet = ({ customer, open, onOpenChange, currencySymbol }: { customer: Customer | null; open: boolean; onOpenChange: (open: boolean) => void, currencySymbol: string }) => {
     const [customerOrders, setCustomerOrders] = React.useState<Order[]>([]);
     const [loading, setLoading] = React.useState(false);
     const { toast } = useToast();
@@ -98,7 +99,7 @@ const CustomerDetailSheet = ({ customer, open, onOpenChange }: { customer: Custo
             </div>
             <div className="col-span-2">
               <p className="text-muted-foreground">Total Spent</p>
-              <p className="font-medium text-lg text-primary">${customer.totalSpent.toFixed(2)}</p>
+              <p className="font-medium text-lg text-primary">{currencySymbol}{customer.totalSpent.toFixed(2)}</p>
             </div>
              <div className="col-span-2">
               <p className="text-muted-foreground">Address</p>
@@ -131,7 +132,7 @@ const CustomerDetailSheet = ({ customer, open, onOpenChange }: { customer: Custo
                                 <TableCell>
                                     <Badge variant={order.shippingStatus === 'Delivered' ? 'default' : 'secondary'} className='capitalize'>{order.shippingStatus}</Badge>
                                 </TableCell>
-                                <TableCell className='text-right'>${order.amount.toFixed(2)}</TableCell>
+                                <TableCell className='text-right'>{currencySymbol}{order.amount.toFixed(2)}</TableCell>
                             </TableRow>
                         ))}
                     </TableBody>
@@ -150,8 +151,12 @@ export default function Customers() {
   const [selectedCustomer, setSelectedCustomer] = React.useState<Customer | null>(null);
   const [isSheetOpen, setIsSheetOpen] = React.useState(false);
   const { toast } = useToast();
+  const [currencySymbol, setCurrencySymbol] = React.useState('$');
 
   React.useEffect(() => {
+    const savedCurrency = localStorage.getItem('bookstore-currency') || 'USD';
+    setCurrencySymbol(getCurrencySymbol(savedCurrency));
+
     const fetchCustomers = async () => {
         setLoading(true);
         try {
@@ -220,7 +225,7 @@ export default function Customers() {
                     <Badge variant={customer.isAdmin ? 'default' : 'secondary'}>{customer.isAdmin ? 'Admin' : 'Customer'}</Badge>
                 </TableCell>
                 <TableCell className="hidden md:table-cell">{customer.totalOrders}</TableCell>
-                <TableCell className="text-right">${customer.totalSpent.toFixed(2)}</TableCell>
+                <TableCell className="text-right">{currencySymbol}{customer.totalSpent.toFixed(2)}</TableCell>
                 <TableCell>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -231,7 +236,7 @@ export default function Customers() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                      <DropdownMenuItem onSelect={() => handleViewDetails(customer)}>View Details</DropdownMenuItem>
+                      <DropdownMenuItem onSelect={(e) => { e.stopPropagation(); handleViewDetails(customer); }}>View Details</DropdownMenuItem>
                       <DropdownMenuItem>Send Email</DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -253,7 +258,7 @@ export default function Customers() {
         </div>
       </CardFooter>
     </Card>
-    <CustomerDetailSheet customer={selectedCustomer} open={isSheetOpen} onOpenChange={setIsSheetOpen} />
+    <CustomerDetailSheet customer={selectedCustomer} open={isSheetOpen} onOpenChange={setIsSheetOpen} currencySymbol={currencySymbol} />
     </>
   );
 }

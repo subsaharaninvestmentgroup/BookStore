@@ -7,28 +7,37 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+
+const CURRENCIES = [
+    { value: 'USD', label: '$ USD' },
+    { value: 'EUR', label: '€ EUR' },
+    { value: 'GBP', label: '£ GBP' },
+    { value: 'ZAR', label: 'R ZAR' },
+];
 
 export default function Settings() {
     const [apiKey, setApiKey] = React.useState('');
+    const [currency, setCurrency] = React.useState('ZAR');
     const { toast } = useToast();
 
-    // In a real app, you would fetch and save the API key to a secure backend or environment variables.
-    // For this example, we'll just simulate the behavior.
+    React.useEffect(() => {
+        const savedCurrency = localStorage.getItem('bookstore-currency');
+        if (savedCurrency) {
+            setCurrency(savedCurrency);
+        }
+    }, []);
 
-    const handleSaveApiKey = () => {
-        // Here you would typically call a server action to save the key
-        console.log('Saving API Key:', apiKey);
+    const handleSaveSettings = () => {
+        // Save API Key logic would go here
+        localStorage.setItem('bookstore-currency', currency);
         toast({
             title: 'Success',
-            description: 'API Key saved successfully. Please restart the server for changes to take effect.',
+            description: 'Settings saved successfully. Changes will be reflected across the app.',
         });
+        // Optionally, force a reload to ensure all components update
+        window.location.reload();
     };
-    
-    // In a real app, you might fetch the key from the server
-    React.useEffect(() => {
-        // e.g. fetch('/api/settings/gemini-key').then(res => res.json()).then(data => setApiKey(data.apiKey));
-        // For now, we'll leave it blank or load from a local (and insecure) place
-    }, []);
 
     return (
         <div className="grid gap-6">
@@ -40,11 +49,11 @@ export default function Settings() {
             </Card>
             <Card>
                 <CardHeader>
-                    <CardTitle>API Configuration</CardTitle>
-                    <CardDescription>Manage API keys for integrated services.</CardDescription>
+                    <CardTitle>Configuration</CardTitle>
+                    <CardDescription>Manage API keys and store preferences.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <div className="space-y-4 max-w-xl">
+                    <div className="space-y-6 max-w-xl">
                         <div className="space-y-2">
                             <Label htmlFor="gemini-api-key">Gemini API Key</Label>
                             <Input 
@@ -58,7 +67,23 @@ export default function Settings() {
                                 Your Gemini API key is used for all AI-powered features.
                             </p>
                         </div>
-                        <Button onClick={handleSaveApiKey}>Save API Key</Button>
+                        <div className="space-y-2">
+                            <Label htmlFor="currency">Currency</Label>
+                             <Select value={currency} onValueChange={setCurrency}>
+                                <SelectTrigger className="w-[180px]">
+                                    <SelectValue placeholder="Select currency" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {CURRENCIES.map((c) => (
+                                        <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                             <p className="text-sm text-muted-foreground">
+                                Choose the currency for your store.
+                            </p>
+                        </div>
+                        <Button onClick={handleSaveSettings}>Save Settings</Button>
                     </div>
                 </CardContent>
             </Card>
