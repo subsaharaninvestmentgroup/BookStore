@@ -58,7 +58,7 @@ export default function LoginPage() {
         <CardHeader className="space-y-4 text-center">
             <div className="inline-flex items-center justify-center gap-2">
                 <Logo className="h-8 w-8 text-primary" />
-                <CardTitle className="text-3xl font-headline">LitManager</CardTitle>
+                <CardTitle className="text-3xl font-headline">Bookstore</CardTitle>
             </div>
           <CardDescription>
             Enter your email below to login to your account

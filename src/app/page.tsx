@@ -103,7 +103,7 @@ export default function DashboardPage() {
         <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
           <a href="#" className="flex items-center gap-2 font-semibold">
             <Logo className="h-6 w-6" />
-            <span className={cn(isCollapsed && 'hidden')}>LitManager</span>
+            <span className={cn(isCollapsed && 'hidden')}>Bookstore</span>
           </a>
           {!isMobile && (
             <Button
@@ -196,7 +196,7 @@ export default function DashboardPage() {
                   className="group flex h-10 w-10 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:text-base"
                 >
                   <Logo className="h-5 w-5 transition-all group-hover:scale-110" />
-                  <span className="sr-only">LitManager</span>
+                  <span className="sr-only">Bookstore</span>
                 </a>
                 {navItems.map((item) => (
                   <button
