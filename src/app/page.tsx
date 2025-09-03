@@ -38,10 +38,15 @@ import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { auth } from '@/lib/firebase';
 import { signOut } from 'firebase/auth';
+import Link from 'next/link';
 
 type View = 'overview' | 'orders' | 'books' | 'customers';
 
-export default function DashboardPage() {
+export default function DashboardPage({
+    children,
+  }: {
+    children?: React.ReactNode;
+  }) {
   const [activeView, setActiveView] = React.useState<View>('overview');
   const isMobile = useIsMobile();
   const [isCollapsed, setIsCollapsed] = React.useState(isMobile);
@@ -63,6 +68,8 @@ export default function DashboardPage() {
   };
 
   const renderView = () => {
+    if (children) return children;
+
     switch (activeView) {
       case 'overview':
         return <Overview />;
@@ -78,10 +85,10 @@ export default function DashboardPage() {
   };
 
   const navItems = [
-    { name: 'overview', label: 'Dashboard', icon: Home },
-    { name: 'orders', label: 'Orders', icon: ShoppingCart },
-    { name: 'books', label: 'Books', icon: Book },
-    { name: 'customers', label: 'Customers', icon: Users },
+    { name: 'overview', label: 'Dashboard', icon: Home, href: '/' },
+    { name: 'orders', label: 'Orders', icon: ShoppingCart, href: '/orders' },
+    { name: 'books', label: 'Books', icon: Book, href: '/books' },
+    { name: 'customers', label: 'Customers', icon: Users, href: '/customers' },
   ];
 
   if (loading || !user) {
@@ -101,10 +108,10 @@ export default function DashboardPage() {
         )}
       >
         <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
-          <a href="#" className="flex items-center gap-2 font-semibold">
+          <Link href="/" className="flex items-center gap-2 font-semibold">
             <Logo className="h-6 w-6" />
             <span className={cn(isCollapsed && 'hidden')}>Bookstore</span>
-          </a>
+          </Link>
           {!isMobile && (
             <Button
               variant="outline"
@@ -123,7 +130,8 @@ export default function DashboardPage() {
               isCollapsed ? (
                 <Tooltip key={item.name}>
                   <TooltipTrigger asChild>
-                    <button
+                    <Link
+                      href={item.href}
                       onClick={() => setActiveView(item.name as View)}
                       className={`flex h-9 w-9 items-center justify-center rounded-lg transition-colors md:h-8 md:w-8 w-full ${
                         activeView === item.name
@@ -133,13 +141,14 @@ export default function DashboardPage() {
                     >
                       <item.icon className="h-5 w-5" />
                       <span className="sr-only">{item.label}</span>
-                    </button>
+                    </Link>
                   </TooltipTrigger>
                   <TooltipContent side="right">{item.label}</TooltipContent>
                 </Tooltip>
               ) : (
-                <button
+                <Link
                   key={item.name}
+                  href={item.href}
                   onClick={() => setActiveView(item.name as View)}
                   className={cn(
                     'flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary w-full',
@@ -148,7 +157,7 @@ export default function DashboardPage() {
                 >
                   <item.icon className="h-4 w-4" />
                   {item.label}
-                </button>
+                </Link>
               )
             )}
           </TooltipProvider>
@@ -199,8 +208,9 @@ export default function DashboardPage() {
                   <span className="sr-only">Bookstore</span>
                 </a>
                 {navItems.map((item) => (
-                  <button
+                  <Link
                     key={item.name}
+                    href={item.href}
                     onClick={() => {
                       setActiveView(item.name as View);
                     }}
@@ -212,7 +222,7 @@ export default function DashboardPage() {
                   >
                     <item.icon className="h-5 w-5" />
                     {item.label}
-                  </button>
+                  </Link>
                 ))}
               </nav>
             </SheetContent>
@@ -252,3 +262,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+
