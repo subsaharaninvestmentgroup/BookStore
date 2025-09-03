@@ -21,7 +21,8 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
   DropdownMenuSeparator,
-  DropdownMenuCheckboxItem
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
 } from '@/components/ui/dropdown-menu';
 import {
   Table,
@@ -32,19 +33,12 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import {
-    Tabs,
-    TabsContent,
-    TabsList,
-    TabsTrigger,
-} from "@/components/ui/tabs"
-import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -106,6 +100,7 @@ export default function Books() {
   const [books, setBooks] = React.useState<Book[]>(initialBooks);
   const [isFormOpen, setIsFormOpen] = React.useState(false);
   const [editingBook, setEditingBook] = React.useState<Book | null>(null);
+  const [filter, setFilter] = React.useState('all');
 
   const handleSaveBook = (bookToSave: Book) => {
     if (editingBook) {
@@ -131,119 +126,121 @@ export default function Books() {
     setIsFormOpen(true);
   }
 
+  const filteredBooks = books.filter(book => {
+    if (filter === 'all') return true;
+    if (filter === 'fiction') return book.category.toLowerCase() === 'fiction';
+    if (filter === 'non-fiction') return book.category.toLowerCase() === 'non-fiction';
+    if (filter === 'low-stock') return book.stock > 0 && book.stock < 10;
+    if (filter === 'in-stock') return book.stock > 0;
+    if (filter === 'out-of-stock') return book.stock === 0;
+    return true;
+  });
+
   return (
     <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-        <Tabs defaultValue="all">
-            <div className="flex items-center">
-                <TabsList>
-                <TabsTrigger value="all">All</TabsTrigger>
-                <TabsTrigger value="fiction">Fiction</TabsTrigger>
-                <TabsTrigger value="non-fiction">Non-Fiction</TabsTrigger>
-                <TabsTrigger value="low-stock" className="hidden sm:flex">Low Stock</TabsTrigger>
-                </TabsList>
-                <div className="ml-auto flex items-center gap-2">
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm" className="h-8 gap-1">
-                        <ListFilter className="h-3.5 w-3.5" />
-                        <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                        Filter
-                        </span>
-                    </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                    <DropdownMenuLabel>Filter by</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuCheckboxItem checked>
-                        In Stock
-                    </DropdownMenuCheckboxItem>
-                    <DropdownMenuCheckboxItem>
-                        Out of Stock
-                    </DropdownMenuCheckboxItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
-                <Button size="sm" variant="outline" className="h-8 gap-1">
-                    <File className="h-3.5 w-3.5" />
-                    <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                    Export
-                    </span>
-                </Button>
-                <Button size="sm" className="h-8 gap-1" onClick={handleAddNew}>
-                    <PlusCircle className="h-3.5 w-3.5" />
-                    <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                    Add Book
-                    </span>
-                </Button>
-                </div>
-            </div>
-            <TabsContent value="all">
-                <Card>
-                <CardHeader>
-                    <CardTitle>Books</CardTitle>
-                    <CardDescription>
-                    Manage your book catalog. View, edit, and add new books.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <Table>
-                    <TableHeader>
-                        <TableRow>
-                        <TableHead>Title</TableHead>
-                        <TableHead>Author</TableHead>
-                        <TableHead>Category</TableHead>
-                        <TableHead>Stock</TableHead>
-                        <TableHead className="text-right">Price</TableHead>
-                        <TableHead>
-                            <span className="sr-only">Actions</span>
-                        </TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {books.map((book) => (
-                        <TableRow key={book.id}>
-                            <TableCell className="font-medium">{book.title}</TableCell>
-                            <TableCell>{book.author}</TableCell>
-                            <TableCell>
-                            <Badge variant="outline">{book.category}</Badge>
-                            </TableCell>
-                            <TableCell>
-                            {book.stock > 0 ? (
-                                <span className={book.stock < 10 ? 'text-destructive font-semibold' : ''}>
-                                {book.stock} in stock
-                                </span>
-                            ) : (
-                                <span className="text-muted-foreground">Out of stock</span>
-                            )}
-                            </TableCell>
-                            <TableCell className="text-right">${book.price.toFixed(2)}</TableCell>
-                            <TableCell>
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                <Button aria-haspopup="true" size="icon" variant="ghost">
-                                    <MoreHorizontal className="h-4 w-4" />
-                                    <span className="sr-only">Toggle menu</span>
-                                </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                <DropdownMenuItem onSelect={() => handleEdit(book)}>Edit</DropdownMenuItem>
-                                <DropdownMenuItem onSelect={() => handleDeleteBook(book.id)} className="text-destructive">Delete</DropdownMenuItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                            </TableCell>
-                        </TableRow>
-                        ))}
-                    </TableBody>
-                    </Table>
-                </CardContent>
-                <CardFooter>
-                    <div className="text-xs text-muted-foreground">
-                    Showing <strong>1-{books.length}</strong> of <strong>{books.length}</strong> books
-                    </div>
-                </CardFooter>
-                </Card>
-            </TabsContent>
-        </Tabs>
+      <div className="flex items-center mb-4">
+        <div className="ml-auto flex items-center gap-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm" className="h-8 gap-1">
+                <ListFilter className="h-3.5 w-3.5" />
+                <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                Filter
+                </span>
+            </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Filter by</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuRadioGroup value={filter} onValueChange={setFilter}>
+                <DropdownMenuRadioItem value="all">All</DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="fiction">Fiction</DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="non-fiction">Non-Fiction</DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="low-stock">Low Stock</DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="in-stock">In Stock</DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="out-of-stock">Out of Stock</DropdownMenuRadioItem>
+              </DropdownMenuRadioGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <Button size="sm" variant="outline" className="h-8 gap-1">
+            <File className="h-3.5 w-3.5" />
+            <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+            Export
+            </span>
+          </Button>
+          <Button size="sm" className="h-8 gap-1" onClick={handleAddNew}>
+            <PlusCircle className="h-3.5 w-3.5" />
+            <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+            Add Book
+            </span>
+          </Button>
+        </div>
+      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Books</CardTitle>
+          <CardDescription>
+          Manage your book catalog. View, edit, and add new books.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Table>
+          <TableHeader>
+              <TableRow>
+              <TableHead>Title</TableHead>
+              <TableHead>Author</TableHead>
+              <TableHead>Category</TableHead>
+              <TableHead>Stock</TableHead>
+              <TableHead className="text-right">Price</TableHead>
+              <TableHead>
+                  <span className="sr-only">Actions</span>
+              </TableHead>
+              </TableRow>
+          </TableHeader>
+          <TableBody>
+              {filteredBooks.map((book) => (
+              <TableRow key={book.id}>
+                  <TableCell className="font-medium">{book.title}</TableCell>
+                  <TableCell>{book.author}</TableCell>
+                  <TableCell>
+                  <Badge variant="outline">{book.category}</Badge>
+                  </TableCell>
+                  <TableCell>
+                  {book.stock > 0 ? (
+                      <span className={book.stock < 10 ? 'text-destructive font-semibold' : ''}>
+                      {book.stock} in stock
+                      </span>
+                  ) : (
+                      <span className="text-muted-foreground">Out of stock</span>
+                  )}
+                  </TableCell>
+                  <TableCell className="text-right">${book.price.toFixed(2)}</TableCell>
+                  <TableCell>
+                  <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                      <Button aria-haspopup="true" size="icon" variant="ghost">
+                          <MoreHorizontal className="h-4 w-4" />
+                          <span className="sr-only">Toggle menu</span>
+                      </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                      <DropdownMenuItem onSelect={() => handleEdit(book)}>Edit</DropdownMenuItem>
+                      <DropdownMenuItem onSelect={() => handleDeleteBook(book.id)} className="text-destructive">Delete</DropdownMenuItem>
+                      </DropdownMenuContent>
+                  </DropdownMenu>
+                  </TableCell>
+              </TableRow>
+              ))}
+          </TableBody>
+          </Table>
+        </CardContent>
+        <CardFooter>
+          <div className="text-xs text-muted-foreground">
+            Showing <strong>1-{filteredBooks.length}</strong> of <strong>{books.length}</strong> books
+          </div>
+        </CardFooter>
+      </Card>
       {isFormOpen && <BookForm book={editingBook} onSave={handleSaveBook} onCancel={() => setIsFormOpen(false)} />}
     </Dialog>
   );
