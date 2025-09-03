@@ -42,13 +42,25 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '../ui/textarea';
+import Image from 'next/image';
 
 const BookForm = ({ book, onSave, onCancel }: { book?: Book | null, onSave: (book: Book) => void, onCancel: () => void }) => {
   const [formData, setFormData] = React.useState<Partial<Book>>(
-    book || { title: '', author: '', category: '', price: 0, stock: 0 }
+    book || { 
+        title: '', 
+        author: '', 
+        category: '', 
+        price: 0, 
+        stock: 0, 
+        description: '', 
+        publicationDate: '', 
+        details: '', 
+        imageUrl: '' 
+    }
   );
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
     setFormData(prev => ({ ...prev, [name]: type === 'number' ? parseFloat(value) || 0 : value }));
   };
@@ -58,34 +70,62 @@ const BookForm = ({ book, onSave, onCancel }: { book?: Book | null, onSave: (boo
   };
 
   return (
-    <DialogContent className="sm:max-w-[425px]">
+    <DialogContent className="sm:max-w-2xl">
       <DialogHeader>
         <DialogTitle>{book ? 'Edit Book' : 'Add New Book'}</DialogTitle>
         <DialogDescription>
           {book ? 'Update the details of the book.' : 'Fill in the details for the new book.'}
         </DialogDescription>
       </DialogHeader>
-      <div className="grid gap-4 py-4">
-        <div className="grid grid-cols-4 items-center gap-4">
-          <Label htmlFor="title" className="text-right">Title</Label>
-          <Input id="title" name="title" value={formData.title} onChange={handleChange} className="col-span-3" />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
+        <div className="space-y-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="title" className="text-right">Title</Label>
+                <Input id="title" name="title" value={formData.title} onChange={handleChange} className="col-span-3" />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="author" className="text-right">Author</Label>
+                <Input id="author" name="author" value={formData.author} onChange={handleChange} className="col-span-3" />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="category" className="text-right">Category</Label>
+                <Input id="category" name="category" value={formData.category} onChange={handleChange} className="col-span-3" />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="price" className="text-right">Price</Label>
+                <Input id="price" name="price" type="number" value={formData.price} onChange={handleChange} className="col-span-3" />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="stock" className="text-right">Stock</Label>
+                <Input id="stock" name="stock" type="number" value={formData.stock} onChange={handleChange} className="col-span-3" />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="publicationDate" className="text-right">Published</Label>
+                <Input id="publicationDate" name="publicationDate" type="date" value={formData.publicationDate} onChange={handleChange} className="col-span-3" />
+            </div>
+            <div className="grid grid-cols-4 items-start gap-4">
+                <Label htmlFor="description" className="text-right pt-2">Description</Label>
+                <Textarea id="description" name="description" value={formData.description} onChange={handleChange} className="col-span-3" />
+            </div>
+            <div className="grid grid-cols-4 items-start gap-4">
+                <Label htmlFor="details" className="text-right pt-2">Details</Label>
+                <Textarea id="details" name="details" placeholder='e.g. Hardcover, 224 pages' value={formData.details} onChange={handleChange} className="col-span-3" />
+            </div>
         </div>
-        <div className="grid grid-cols-4 items-center gap-4">
-          <Label htmlFor="author" className="text-right">Author</Label>
-          <Input id="author" name="author" value={formData.author} onChange={handleChange} className="col-span-3" />
+        <div className='space-y-4'>
+            <div className="grid w-full items-center gap-1.5">
+                <Label htmlFor="imageUrl">Image URL</Label>
+                <Input id="imageUrl" name="imageUrl" placeholder="https://example.com/image.jpg" value={formData.imageUrl} onChange={handleChange} />
+            </div>
+            <div className='aspect-[2/3] w-full bg-muted rounded-lg flex items-center justify-center overflow-hidden'>
+                {formData.imageUrl ? (
+                    <Image src={formData.imageUrl} alt={formData.title || 'Book cover'} width={400} height={600} className="object-cover w-full h-full" />
+                ) : (
+                    <p className='text-sm text-muted-foreground'>Image preview</p>
+                )}
+            </div>
         </div>
-        <div className="grid grid-cols-4 items-center gap-4">
-          <Label htmlFor="category" className="text-right">Category</Label>
-          <Input id="category" name="category" value={formData.category} onChange={handleChange} className="col-span-3" />
-        </div>
-        <div className="grid grid-cols-4 items-center gap-4">
-          <Label htmlFor="price" className="text-right">Price</Label>
-          <Input id="price" name="price" type="number" value={formData.price} onChange={handleChange} className="col-span-3" />
-        </div>
-        <div className="grid grid-cols-4 items-center gap-4">
-          <Label htmlFor="stock" className="text-right">Stock</Label>
-          <Input id="stock" name="stock" type="number" value={formData.stock} onChange={handleChange} className="col-span-3" />
-        </div>
+
       </div>
       <DialogFooter>
         <Button variant="outline" onClick={onCancel}>Cancel</Button>
@@ -138,55 +178,60 @@ export default function Books() {
 
   return (
     <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-      <div className="flex items-center mb-4">
-        <div className="ml-auto flex items-center gap-2">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="h-8 gap-1">
-                <ListFilter className="h-3.5 w-3.5" />
-                <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                Filter
-                </span>
-            </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Filter by</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuRadioGroup value={filter} onValueChange={setFilter}>
-                <DropdownMenuRadioItem value="all">All</DropdownMenuRadioItem>
-                <DropdownMenuRadioItem value="fiction">Fiction</DropdownMenuRadioItem>
-                <DropdownMenuRadioItem value="non-fiction">Non-Fiction</DropdownMenuRadioItem>
-                <DropdownMenuRadioItem value="low-stock">Low Stock</DropdownMenuRadioItem>
-                <DropdownMenuRadioItem value="in-stock">In Stock</DropdownMenuRadioItem>
-                <DropdownMenuRadioItem value="out-of-stock">Out of Stock</DropdownMenuRadioItem>
-              </DropdownMenuRadioGroup>
-            </DropdownMenuContent>
-          </DropdownMenu>
-          <Button size="sm" variant="outline" className="h-8 gap-1">
-            <File className="h-3.5 w-3.5" />
-            <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-            Export
-            </span>
-          </Button>
-          <Button size="sm" className="h-8 gap-1" onClick={handleAddNew}>
-            <PlusCircle className="h-3.5 w-3.5" />
-            <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-            Add Book
-            </span>
-          </Button>
-        </div>
-      </div>
       <Card>
         <CardHeader>
-          <CardTitle>Books</CardTitle>
-          <CardDescription>
-          Manage your book catalog. View, edit, and add new books.
-          </CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Books</CardTitle>
+              <CardDescription>
+              Manage your book catalog. View, edit, and add new books.
+              </CardDescription>
+            </div>
+            <div className="flex items-center gap-2">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="h-8 gap-1">
+                    <ListFilter className="h-3.5 w-3.5" />
+                    <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                    Filter
+                    </span>
+                </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuLabel>Filter by</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuRadioGroup value={filter} onValueChange={setFilter}>
+                    <DropdownMenuRadioItem value="all">All</DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="fiction">Fiction</DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="non-fiction">Non-Fiction</DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="low-stock">Low Stock</DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="in-stock">In Stock</DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="out-of-stock">Out of Stock</DropdownMenuRadioItem>
+                  </DropdownMenuRadioGroup>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <Button size="sm" variant="outline" className="h-8 gap-1">
+                <File className="h-3.5 w-3.5" />
+                <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                Export
+                </span>
+              </Button>
+              <Button size="sm" className="h-8 gap-1" onClick={handleAddNew}>
+                <PlusCircle className="h-3.5 w-3.5" />
+                <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                Add Book
+                </span>
+              </Button>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           <Table>
           <TableHeader>
               <TableRow>
+              <TableHead className="hidden w-[100px] sm:table-cell">
+                <span className="sr-only">Image</span>
+              </TableHead>
               <TableHead>Title</TableHead>
               <TableHead>Author</TableHead>
               <TableHead>Category</TableHead>
@@ -200,6 +245,16 @@ export default function Books() {
           <TableBody>
               {filteredBooks.map((book) => (
               <TableRow key={book.id}>
+                  <TableCell className="hidden sm:table-cell">
+                    <Image
+                        alt="Book cover"
+                        className="aspect-[2/3] rounded-md object-cover"
+                        height="90"
+                        src={book.imageUrl}
+                        width="60"
+                        data-ai-hint="book cover"
+                    />
+                  </TableCell>
                   <TableCell className="font-medium">{book.title}</TableCell>
                   <TableCell>{book.author}</TableCell>
                   <TableCell>

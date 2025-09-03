@@ -5,6 +5,10 @@ export type Book = {
   category: string;
   price: number;
   stock: number;
+  description: string;
+  publicationDate: string;
+  details: string;
+  imageUrl: string;
 };
 
 export type Order = {
