@@ -16,6 +16,7 @@ import {
   CheckCircle2,
   AlertTriangle,
   Store,
+  Settings as SettingsIcon,
 } from 'lucide-react';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { useRouter } from 'next/navigation';
@@ -38,6 +39,7 @@ import Books from '@/components/dashboard/books';
 import Orders from '@/components/dashboard/orders';
 import Customers from '@/components/dashboard/customers';
 import Banners from '@/components/dashboard/banners';
+import Settings from '@/components/dashboard/settings';
 import { Logo } from '@/components/icons';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -50,7 +52,7 @@ import { doc, getDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { checkApiStatusAction } from './actions';
 
-type View = 'overview' | 'orders' | 'books' | 'customers' | 'book-form' | 'banners' | 'banner-form';
+type View = 'overview' | 'orders' | 'books' | 'customers' | 'book-form' | 'banners' | 'banner-form' | 'settings';
 
 export default function DashboardPage() {
   const [activeView, setActiveView] = React.useState<View>('overview');
@@ -136,6 +138,8 @@ export default function DashboardPage() {
         return <Banners onAddBanner={() => handleShowBannerForm()} onEditBanner={handleShowBannerForm} />;
       case 'banner-form':
         return <BannerForm bannerId={editingBannerId} onSaveSuccess={handleBackToBanners} onCancel={handleBackToBanners} />;
+      case 'settings':
+        return <Settings />;
       default:
         return <Overview />;
     }
@@ -147,6 +151,7 @@ export default function DashboardPage() {
     { name: 'books', label: 'Books', icon: Book },
     { name: 'customers', label: 'Customers', icon: Users },
     { name: 'banners', label: 'Banners', icon: GalleryHorizontal },
+    { name: 'settings', label: 'Settings', icon: SettingsIcon },
   ];
 
   if (loading || !user) {
@@ -246,7 +251,7 @@ export default function DashboardPage() {
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>My Account</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>Settings</DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => setActiveView('settings')}>Settings</DropdownMenuItem>
               <DropdownMenuItem>Support</DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
@@ -333,7 +338,7 @@ export default function DashboardPage() {
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>My Account</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>Settings</DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => setActiveView('settings')}>Settings</DropdownMenuItem>
               <DropdownMenuItem>Support</DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
