@@ -23,7 +23,6 @@ export default function SignupPage() {
     const [name, setName] = React.useState('');
     const [email, setEmail] = React.useState('');
     const [password, setPassword] = React.useState('');
-    const [address, setAddress] = React.useState('');
     const router = useRouter();
     const { toast } = useToast();
 
@@ -42,7 +41,7 @@ export default function SignupPage() {
                 joinDate: new Date().toISOString().split('T')[0],
                 totalOrders: 0,
                 totalSpent: 0,
-                address: address,
+                address: '',
                 isAdmin: false,
             });
 
@@ -118,16 +117,6 @@ export default function SignupPage() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                />
-              </div>
-               <div className="grid gap-2">
-                <Label htmlFor="address">Address</Label>
-                <Input 
-                    id="address" 
-                    placeholder="123 Main St, Anytown, USA" 
-                    required 
-                    value={address}
-                    onChange={(e) => setAddress(e.target.value)}
                 />
               </div>
               <div className="grid gap-2">
