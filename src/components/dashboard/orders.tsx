@@ -1,8 +1,8 @@
+
 'use client';
 
 import * as React from 'react';
 import { MoreHorizontal, File } from 'lucide-react';
-import { orders as initialOrders } from '@/lib/data';
 import type { Order } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -37,16 +37,53 @@ import {
     TabsList,
     TabsTrigger,
 } from "@/components/ui/tabs"
+import { db } from '@/lib/firebase';
+import { collection, getDocs, doc, updateDoc } from 'firebase/firestore';
+import { useToast } from '@/hooks/use-toast';
 
 type ShippingStatus = Order['shippingStatus'];
 const shippingStatuses: ShippingStatus[] = ['Processing', 'Shipped', 'Delivered', 'Cancelled'];
 
 export default function Orders() {
-  const [orders, setOrders] = React.useState<Order[]>(initialOrders);
+  const [orders, setOrders] = React.useState<Order[]>([]);
+  const [loading, setLoading] = React.useState(true);
   const [activeTab, setActiveTab] = React.useState('all');
+  const { toast } = useToast();
 
-  const handleShippingStatusChange = (orderId: string, status: ShippingStatus) => {
-    setOrders(orders.map(o => o.id === orderId ? { ...o, shippingStatus: status } : o));
+  const fetchOrders = React.useCallback(async () => {
+    setLoading(true);
+    try {
+        const querySnapshot = await getDocs(collection(db, 'orders'));
+        const ordersData = querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })) as Order[];
+        setOrders(ordersData);
+    } catch(error: any) {
+        toast({
+            variant: 'destructive',
+            title: 'Error fetching orders',
+            description: error.message,
+        });
+    } finally {
+        setLoading(false);
+    }
+  }, [toast]);
+
+  React.useEffect(() => {
+    fetchOrders();
+  }, [fetchOrders]);
+
+  const handleShippingStatusChange = async (orderId: string, status: ShippingStatus) => {
+    const orderRef = doc(db, 'orders', orderId);
+    try {
+        await updateDoc(orderRef, { shippingStatus: status });
+        setOrders(orders.map(o => o.id === orderId ? { ...o, shippingStatus: status } : o));
+        toast({ title: 'Success', description: 'Order status updated.'});
+    } catch (error: any) {
+        toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: `Failed to update status: ${error.message}`,
+        });
+    }
   };
 
   const getBadgeVariant = (status: Order['shippingStatus']) => {
@@ -95,7 +132,15 @@ export default function Orders() {
               </TableRow>
           </TableHeader>
           <TableBody>
-            {orderList.length > 0 ? orderList.map((order) => (
+            {loading ? (
+                 <TableRow>
+                    <TableCell colSpan={5} className="text-center">
+                        <div className="flex justify-center items-center p-4">
+                            <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+                        </div>
+                    </TableCell>
+                </TableRow>
+            ) : orderList.length > 0 ? orderList.map((order) => (
               <TableRow key={order.id}>
                   <TableCell>
                       <div className="font-medium">{order.customerName}</div>

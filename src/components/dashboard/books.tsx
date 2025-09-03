@@ -1,9 +1,9 @@
+
 'use client';
 
 import * as React from 'react';
 import { MoreHorizontal, PlusCircle, File, ListFilter, Upload, X as XIcon, Paperclip, BookImage } from 'lucide-react';
-import { books as initialBooks } from '@/lib/data';
-import type { Book } from '@/lib/types';
+import type { Book, SupplementaryFile } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -45,8 +45,20 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '../ui/textarea';
 import Image from 'next/image';
 import { ScrollArea } from '../ui/scroll-area';
+import { db, storage } from '@/lib/firebase';
+import { collection, addDoc, updateDoc, deleteDoc, doc, getDocs } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
+import { useToast } from '@/hooks/use-toast';
+import { v4 as uuidv4 } from 'uuid';
 
-const BookForm = ({ book, onSave, onCancel }: { book?: Book | null, onSave: (book: Book) => void, onCancel: () => void }) => {
+type UploadableFile = {
+    file: File;
+    name: string;
+    url: string;
+    type: string;
+};
+
+const BookForm = ({ book, onSave, onCancel }: { book?: Book | null, onSave: () => void, onCancel: () => void }) => {
   const [formData, setFormData] = React.useState<Partial<Book>>(
     book || { 
         title: '', 
@@ -61,8 +73,12 @@ const BookForm = ({ book, onSave, onCancel }: { book?: Book | null, onSave: (boo
         supplementaryFiles: [],
     }
   );
+  const [imageFile, setImageFile] = React.useState<File | null>(null);
+  const [newSupplementaryFiles, setNewSupplementaryFiles] = React.useState<UploadableFile[]>([]);
   const imageInputRef = React.useRef<HTMLInputElement>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
+  const [isSaving, setIsSaving] = React.useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
@@ -72,6 +88,7 @@ const BookForm = ({ book, onSave, onCancel }: { book?: Book | null, onSave: (boo
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      setImageFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
         setFormData(prev => ({ ...prev, imageUrl: reader.result as string }));
@@ -83,11 +100,12 @@ const BookForm = ({ book, onSave, onCancel }: { book?: Book | null, onSave: (boo
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files) {
-      const newFiles = Array.from(files).map(file => {
+      const newFilesArray = Array.from(files).map(file => {
         const reader = new FileReader();
-        return new Promise<{ name: string; url: string; type: string }>(resolve => {
+        return new Promise<UploadableFile>(resolve => {
           reader.onloadend = () => {
             resolve({
+              file,
               name: file.name,
               url: reader.result as string,
               type: file.type,
@@ -96,21 +114,76 @@ const BookForm = ({ book, onSave, onCancel }: { book?: Book | null, onSave: (boo
           reader.readAsDataURL(file);
         });
       });
-      Promise.all(newFiles).then(processedFiles => {
-        setFormData(prev => ({ ...prev, supplementaryFiles: [...(prev.supplementaryFiles || []), ...processedFiles] }));
+      Promise.all(newFilesArray).then(processedFiles => {
+        setNewSupplementaryFiles(prev => [...prev, ...processedFiles]);
       });
     }
   };
 
-  const removeSupplementaryFile = (index: number) => {
-    setFormData(prev => ({
-      ...prev,
-      supplementaryFiles: prev.supplementaryFiles?.filter((_, i) => i !== index),
-    }));
+  const removeSupplementaryFile = (index: number, isNew: boolean) => {
+    if (isNew) {
+        setNewSupplementaryFiles(prev => prev.filter((_, i) => i !== index));
+    } else {
+        setFormData(prev => ({
+            ...prev,
+            supplementaryFiles: prev.supplementaryFiles?.filter((_, i) => i !== index),
+        }));
+    }
   }
 
-  const handleSubmit = () => {
-    onSave(formData as Book);
+  const uploadFile = async (file: File, path: string): Promise<string> => {
+    const storageRef = ref(storage, path);
+    await uploadBytes(storageRef, file);
+    return await getDownloadURL(storageRef);
+  }
+
+  const handleSubmit = async () => {
+    setIsSaving(true);
+    try {
+        let imageUrl = formData.imageUrl || '';
+        if (imageFile) {
+            if (book?.imageUrl) {
+                try {
+                    const oldImageRef = ref(storage, book.imageUrl);
+                    await deleteObject(oldImageRef);
+                } catch(e) {
+                    console.warn("Old image not found, could not delete.", e)
+                }
+            }
+            const imagePath = `books/${uuidv4()}-${imageFile.name}`;
+            imageUrl = await uploadFile(imageFile, imagePath);
+        }
+        
+        const uploadedFiles: SupplementaryFile[] = [];
+        for (const upFile of newSupplementaryFiles) {
+            const filePath = `supplementary/${uuidv4()}-${upFile.name}`;
+            const fileUrl = await uploadFile(upFile.file, filePath);
+            uploadedFiles.push({ name: upFile.name, url: fileUrl, type: upFile.type });
+        }
+        
+        const finalSupplementaryFiles = [...(formData.supplementaryFiles || []), ...uploadedFiles];
+
+        const bookData = { ...formData, imageUrl, supplementaryFiles: finalSupplementaryFiles };
+        delete bookData.id;
+
+        if (book?.id) {
+            const bookRef = doc(db, 'books', book.id);
+            await updateDoc(bookRef, bookData);
+            toast({ title: 'Success', description: 'Book updated successfully.' });
+        } else {
+            await addDoc(collection(db, 'books'), bookData);
+            toast({ title: 'Success', description: 'Book added successfully.' });
+        }
+        onSave();
+    } catch (error: any) {
+        toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: `Failed to save book: ${error.message}`,
+        });
+    } finally {
+        setIsSaving(false);
+    }
   };
   
   return (
@@ -213,7 +286,18 @@ const BookForm = ({ book, onSave, onCancel }: { book?: Book | null, onSave: (boo
                         <Paperclip className="h-4 w-4" />
                         <span className="truncate">{file.name}</span>
                       </div>
-                      <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => removeSupplementaryFile(index)}>
+                      <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => removeSupplementaryFile(index, false)}>
+                        <XIcon className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                  {newSupplementaryFiles.map((file, index) => (
+                    <div key={index} className="flex items-center justify-between text-sm p-2 bg-muted/50 rounded-md">
+                      <div className="flex items-center gap-2 truncate">
+                        <Paperclip className="h-4 w-4" />
+                        <span className="truncate">{file.name}</span>
+                      </div>
+                      <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => removeSupplementaryFile(index, true)}>
                         <XIcon className="h-4 w-4" />
                       </Button>
                     </div>
@@ -224,8 +308,10 @@ const BookForm = ({ book, onSave, onCancel }: { book?: Book | null, onSave: (boo
         </div>
       </ScrollArea>
       <DialogFooter>
-        <Button variant="outline" onClick={onCancel}>Cancel</Button>
-        <Button onClick={handleSubmit}>Save changes</Button>
+        <Button variant="outline" onClick={onCancel} disabled={isSaving}>Cancel</Button>
+        <Button onClick={handleSubmit} disabled={isSaving}>
+            {isSaving ? "Saving..." : "Save changes"}
+        </Button>
       </DialogFooter>
     </DialogContent>
   );
@@ -233,23 +319,74 @@ const BookForm = ({ book, onSave, onCancel }: { book?: Book | null, onSave: (boo
 
 
 export default function Books() {
-  const [books, setBooks] = React.useState<Book[]>(initialBooks);
+  const [books, setBooks] = React.useState<Book[]>([]);
+  const [loading, setLoading] = React.useState(true);
   const [isFormOpen, setIsFormOpen] = React.useState(false);
   const [editingBook, setEditingBook] = React.useState<Book | null>(null);
   const [filter, setFilter] = React.useState('all');
+  const { toast } = useToast();
 
-  const handleSaveBook = (bookToSave: Book) => {
-    if (editingBook) {
-      setBooks(books.map(b => b.id === bookToSave.id ? bookToSave : b));
-    } else {
-      setBooks([...books, { ...bookToSave, id: (books.length + 1).toString() }]);
+  const fetchBooks = React.useCallback(async () => {
+    setLoading(true);
+    try {
+        const querySnapshot = await getDocs(collection(db, 'books'));
+        const booksData = querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })) as Book[];
+        setBooks(booksData);
+    } catch(error: any) {
+        toast({
+            variant: 'destructive',
+            title: 'Error fetching books',
+            description: error.message,
+        });
+    } finally {
+        setLoading(false);
     }
-    setEditingBook(null);
+  }, [toast]);
+
+  React.useEffect(() => {
+    fetchBooks();
+  }, [fetchBooks]);
+
+  const handleSaveBook = () => {
     setIsFormOpen(false);
+    setEditingBook(null);
+    fetchBooks();
   };
 
-  const handleDeleteBook = (bookId: string) => {
-    setBooks(books.filter(b => b.id !== bookId));
+  const handleDeleteBook = async (bookId: string) => {
+    const bookToDelete = books.find(b => b.id === bookId);
+    if (!bookToDelete) return;
+
+    try {
+        // Delete supplementary files from storage
+        if(bookToDelete.supplementaryFiles) {
+            for(const file of bookToDelete.supplementaryFiles) {
+                try {
+                    await deleteObject(ref(storage, file.url));
+                } catch (e) {
+                    console.warn(`Could not delete supplementary file: ${file.url}`, e)
+                }
+            }
+        }
+        // Delete cover image from storage
+        if(bookToDelete.imageUrl) {
+            try {
+                await deleteObject(ref(storage, bookToDelete.imageUrl));
+            } catch (e) {
+                console.warn(`Could not delete image: ${bookToDelete.imageUrl}`, e)
+            }
+        }
+        // Delete book from firestore
+        await deleteDoc(doc(db, 'books', bookId));
+        toast({ title: 'Success', description: 'Book deleted successfully.' });
+        fetchBooks();
+    } catch (error: any) {
+        toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: `Failed to delete book: ${error.message}`,
+        });
+    }
   };
   
   const handleAddNew = () => {
@@ -273,7 +410,12 @@ export default function Books() {
   });
 
   return (
-    <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+    <Dialog open={isFormOpen} onOpenChange={(isOpen) => {
+        if (!isOpen) {
+            setEditingBook(null);
+        }
+        setIsFormOpen(isOpen);
+    }}>
       <Card>
         <CardHeader>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -339,14 +481,22 @@ export default function Books() {
               </TableRow>
           </TableHeader>
           <TableBody>
-              {filteredBooks.map((book) => (
+              {loading ? (
+                <TableRow>
+                    <TableCell colSpan={7} className="text-center">
+                        <div className="flex justify-center items-center p-4">
+                            <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+                        </div>
+                    </TableCell>
+                </TableRow>
+              ) : filteredBooks.length > 0 ? filteredBooks.map((book) => (
               <TableRow key={book.id}>
                   <TableCell className="hidden sm:table-cell">
                     <Image
                         alt="Book cover"
                         className="aspect-[2/3] rounded-md object-cover"
                         height="90"
-                        src={book.imageUrl}
+                        src={book.imageUrl || "https://picsum.photos/60/90"}
                         width="60"
                         data-ai-hint="book cover"
                     />
@@ -354,7 +504,7 @@ export default function Books() {
                   <TableCell className="font-medium">{book.title}</TableCell>
                   <TableCell className="hidden md:table-cell">{book.author}</TableCell>
                   <TableCell className="hidden md:table-cell">
-                  <Badge variant="outline">{book.category}</Badge>
+                    <Badge variant="outline">{book.category}</Badge>
                   </TableCell>
                   <TableCell className="hidden sm:table-cell">
                   {book.stock > 0 ? (
@@ -382,7 +532,13 @@ export default function Books() {
                   </DropdownMenu>
                   </TableCell>
               </TableRow>
-              ))}
+              )) : (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center">
+                    No books found.
+                  </TableCell>
+                </TableRow>
+              )}
           </TableBody>
           </Table>
         </CardContent>

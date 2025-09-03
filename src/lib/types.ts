@@ -1,3 +1,10 @@
+
+export type SupplementaryFile = { 
+  name: string; 
+  url: string; 
+  type: string 
+};
+
 export type Book = {
   id: string;
   title: string;
@@ -9,8 +16,7 @@ export type Book = {
   publicationDate: string;
   details: string;
   imageUrl: string;
-  fileType?: string;
-  supplementaryFiles?: { name: string; url: string; type: string }[];
+  supplementaryFiles: SupplementaryFile[];
 };
 
 export type Order = {

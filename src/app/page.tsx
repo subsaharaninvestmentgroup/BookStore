@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -12,6 +13,8 @@ import {
   ShoppingCart,
   Users,
 } from 'lucide-react';
+import { useAuthState } from 'react-firebase-hooks/auth';
+import { useRouter } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -33,6 +36,8 @@ import Customers from '@/components/dashboard/customers';
 import { Logo } from '@/components/icons';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { auth } from '@/lib/firebase';
+import { signOut } from 'firebase/auth';
 
 type View = 'overview' | 'orders' | 'books' | 'customers';
 
@@ -40,10 +45,22 @@ export default function DashboardPage() {
   const [activeView, setActiveView] = React.useState<View>('overview');
   const isMobile = useIsMobile();
   const [isCollapsed, setIsCollapsed] = React.useState(isMobile);
+  const [user, loading] = useAuthState(auth);
+  const router = useRouter();
 
+  React.useEffect(() => {
+    if (!loading && !user) {
+      router.push('/login');
+    }
+  }, [user, loading, router]);
+  
   React.useEffect(() => {
     setIsCollapsed(isMobile);
   }, [isMobile]);
+
+  const handleLogout = () => {
+    signOut(auth);
+  };
 
   const renderView = () => {
     switch (activeView) {
@@ -66,6 +83,14 @@ export default function DashboardPage() {
     { name: 'books', label: 'Books', icon: Book },
     { name: 'customers', label: 'Customers', icon: Users },
   ];
+
+  if (loading || !user) {
+    return (
+        <div className="flex min-h-screen w-full items-center justify-center">
+            <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+        </div>
+    )
+  }
 
   return (
     <div className="flex min-h-screen w-full flex-col bg-muted/40">
@@ -145,7 +170,7 @@ export default function DashboardPage() {
               <DropdownMenuItem>Settings</DropdownMenuItem>
               <DropdownMenuItem>Support</DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>Logout</DropdownMenuItem>
+              <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </nav>
@@ -216,7 +241,7 @@ export default function DashboardPage() {
               <DropdownMenuItem>Settings</DropdownMenuItem>
               <DropdownMenuItem>Support</DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>Logout</DropdownMenuItem>
+              <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </header>

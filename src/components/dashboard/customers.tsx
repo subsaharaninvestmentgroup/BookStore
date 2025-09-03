@@ -1,8 +1,8 @@
+
 'use client';
 
 import * as React from 'react';
 import { MoreHorizontal } from 'lucide-react';
-import { customers as initialCustomers, orders } from '@/lib/data';
 import type { Customer, Order } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import {
@@ -37,11 +37,39 @@ import {
 } from '@/components/ui/sheet';
 import { Badge } from '../ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import { db } from '@/lib/firebase';
+import { collection, getDocs, query, where } from 'firebase/firestore';
+import { useToast } from '@/hooks/use-toast';
 
-const CustomerDetailSheet = ({ customer, orders, open, onOpenChange }: { customer: Customer | null; orders: Order[]; open: boolean; onOpenChange: (open: boolean) => void }) => {
+const CustomerDetailSheet = ({ customer, open, onOpenChange }: { customer: Customer | null; open: boolean; onOpenChange: (open: boolean) => void }) => {
+    const [customerOrders, setCustomerOrders] = React.useState<Order[]>([]);
+    const [loading, setLoading] = React.useState(false);
+    const { toast } = useToast();
+
+    React.useEffect(() => {
+        if (customer && open) {
+            const fetchOrders = async () => {
+                setLoading(true);
+                try {
+                    const q = query(collection(db, 'orders'), where('customerEmail', '==', customer.email));
+                    const querySnapshot = await getDocs(q);
+                    const ordersData = querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })) as Order[];
+                    setCustomerOrders(ordersData);
+                } catch(error: any) {
+                    toast({
+                        variant: 'destructive',
+                        title: 'Error fetching orders',
+                        description: error.message,
+                    });
+                } finally {
+                    setLoading(false);
+                }
+            };
+            fetchOrders();
+        }
+    }, [customer, open, toast]);
+
     if (!customer) return null;
-  
-    const customerOrders = orders.filter(o => o.customerEmail === customer.email);
   
     return (
       <Sheet open={open} onOpenChange={onOpenChange}>
@@ -75,29 +103,35 @@ const CustomerDetailSheet = ({ customer, orders, open, onOpenChange }: { custome
           
           <h3 className="font-semibold mb-2">Order History</h3>
           <div className="max-h-96 overflow-y-auto pr-2">
-            <Table>
-                <TableHeader>
-                    <TableRow>
-                        <TableHead>Order</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead className='text-right'>Amount</TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {customerOrders.map(order => (
-                        <TableRow key={order.id}>
-                            <TableCell>
-                                <p className='font-medium'>{order.id}</p>
-                                <p className='text-xs text-muted-foreground'>{order.date}</p>
-                            </TableCell>
-                            <TableCell>
-                                <Badge variant={order.shippingStatus === 'Delivered' ? 'default' : 'secondary'} className='capitalize'>{order.shippingStatus}</Badge>
-                            </TableCell>
-                            <TableCell className='text-right'>${order.amount.toFixed(2)}</TableCell>
+            {loading ? (
+                <div className="flex justify-center items-center p-4">
+                    <div className="h-6 w-6 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+                </div>
+            ) : (
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Order</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead className='text-right'>Amount</TableHead>
                         </TableRow>
-                    ))}
-                </TableBody>
-            </Table>
+                    </TableHeader>
+                    <TableBody>
+                        {customerOrders.map(order => (
+                            <TableRow key={order.id}>
+                                <TableCell>
+                                    <p className='font-medium'>{order.id}</p>
+                                    <p className='text-xs text-muted-foreground'>{order.date}</p>
+                                </TableCell>
+                                <TableCell>
+                                    <Badge variant={order.shippingStatus === 'Delivered' ? 'default' : 'secondary'} className='capitalize'>{order.shippingStatus}</Badge>
+                                </TableCell>
+                                <TableCell className='text-right'>${order.amount.toFixed(2)}</TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            )}
           </div>
         </SheetContent>
       </Sheet>
@@ -106,9 +140,31 @@ const CustomerDetailSheet = ({ customer, orders, open, onOpenChange }: { custome
   
 
 export default function Customers() {
-  const [customers] = React.useState<Customer[]>(initialCustomers);
+  const [customers, setCustomers] = React.useState<Customer[]>([]);
+  const [loading, setLoading] = React.useState(true);
   const [selectedCustomer, setSelectedCustomer] = React.useState<Customer | null>(null);
   const [isSheetOpen, setIsSheetOpen] = React.useState(false);
+  const { toast } = useToast();
+
+  React.useEffect(() => {
+    const fetchCustomers = async () => {
+        setLoading(true);
+        try {
+            const querySnapshot = await getDocs(collection(db, 'customers'));
+            const customersData = querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })) as Customer[];
+            setCustomers(customersData);
+        } catch(error: any) {
+            toast({
+                variant: 'destructive',
+                title: 'Error fetching customers',
+                description: error.message,
+            });
+        } finally {
+            setLoading(false);
+        }
+      };
+      fetchCustomers();
+  }, [toast]);
 
   const handleViewDetails = (customer: Customer) => {
     setSelectedCustomer(customer);
@@ -138,7 +194,15 @@ export default function Customers() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {customers.map((customer) => (
+            {loading ? (
+                <TableRow>
+                    <TableCell colSpan={5} className="text-center">
+                        <div className="flex justify-center items-center p-4">
+                            <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+                        </div>
+                    </TableCell>
+                </TableRow>
+            ) : customers.length > 0 ? customers.map((customer) => (
               <TableRow key={customer.id} className="cursor-pointer hover:bg-muted/50" onClick={() => handleViewDetails(customer)}>
                 <TableCell className="font-medium flex items-center gap-3">
                     <Avatar className="h-8 w-8">
@@ -166,7 +230,13 @@ export default function Customers() {
                   </DropdownMenu>
                 </TableCell>
               </TableRow>
-            ))}
+            )) : (
+              <TableRow>
+                  <TableCell colSpan={5} className="text-center">
+                    No customers found.
+                  </TableCell>
+                </TableRow>
+            )}
           </TableBody>
         </Table>
       </CardContent>
@@ -176,7 +246,7 @@ export default function Customers() {
         </div>
       </CardFooter>
     </Card>
-    <CustomerDetailSheet customer={selectedCustomer} orders={orders} open={isSheetOpen} onOpenChange={setIsSheetOpen} />
+    <CustomerDetailSheet customer={selectedCustomer} open={isSheetOpen} onOpenChange={setIsSheetOpen} />
     </>
   );
 }
