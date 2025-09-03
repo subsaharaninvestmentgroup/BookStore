@@ -23,10 +23,10 @@ export default function StorefrontLayout({
           <Link href="/store/all-books" className="text-foreground transition-colors hover:text-foreground">
             All Books
           </Link>
-          <Link href="/store/fiction" className="text-muted-foreground transition-colors hover:text-foreground">
+          <Link href="#" className="text-muted-foreground transition-colors hover:text-foreground">
             Fiction
           </Link>
-          <Link href="/store/non-fiction" className="text-muted-foreground transition-colors hover:text-foreground">
+          <Link href="#" className="text-muted-foreground transition-colors hover:text-foreground">
             Non-Fiction
           </Link>
         </nav>
@@ -46,10 +46,10 @@ export default function StorefrontLayout({
               <Link href="/store/all-books" className="hover:text-foreground">
                 All Books
               </Link>
-              <Link href="/store/fiction" className="text-muted-foreground hover:text-foreground">
+              <Link href="#" className="text-muted-foreground hover:text-foreground">
                 Fiction
               </Link>
-              <Link href="/store/non-fiction" className="text-muted-foreground hover:text-foreground">
+              <Link href="#" className="text-muted-foreground hover:text-foreground">
                 Non-Fiction
               </Link>
             </nav>
