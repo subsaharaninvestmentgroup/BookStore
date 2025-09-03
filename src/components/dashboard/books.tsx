@@ -247,7 +247,7 @@ export default function Books({ onAddBook, onEditBook }: BooksProps) {
                       <DropdownMenuLabel>Actions</DropdownMenuLabel>
                       <DropdownMenuItem onSelect={() => onEditBook(book.id)}>Edit</DropdownMenuItem>
                       <DropdownMenuItem asChild>
-                        <Link href={`/book/${book.id}`} target="_blank">View in Store</Link>
+                        <Link href={`/store/book/${book.id}`} target="_blank">View in Store</Link>
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem onSelect={() => handleDeleteBook(book.id)} className="text-destructive">Delete</DropdownMenuItem>
