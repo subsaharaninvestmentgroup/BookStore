@@ -15,6 +15,8 @@ import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage
 import { useToast } from '@/hooks/use-toast';
 import { v4 as uuidv4 } from 'uuid';
 import type { Book, SupplementaryFile } from '@/lib/types';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '../ui/dialog';
+import { ScrollArea } from '../ui/scroll-area';
 
 type UploadableFile = {
     file: File;
@@ -41,6 +43,7 @@ export function BookForm({ bookId, onSaveSuccess, onCancel }: BookFormProps) {
     details: '',
     imageUrl: '',
     supplementaryFiles: [],
+    sampleText: '',
   });
   const [imageFile, setImageFile] = React.useState<File | null>(null);
   const [newSupplementaryFiles, setNewSupplementaryFiles] = React.useState<UploadableFile[]>([]);
@@ -49,6 +52,7 @@ export function BookForm({ bookId, onSaveSuccess, onCancel }: BookFormProps) {
   const { toast } = useToast();
   const [isSaving, setIsSaving] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(!!bookId);
+  const [isPreviewOpen, setIsPreviewOpen] = React.useState(false);
 
   React.useEffect(() => {
     if (bookId) {
@@ -186,6 +190,9 @@ export function BookForm({ bookId, onSaveSuccess, onCancel }: BookFormProps) {
                 <Button variant="outline" size="sm" onClick={onCancel} disabled={isSaving}>
                     Cancel
                 </Button>
+                 <Button variant="outline" size="sm" onClick={() => setIsPreviewOpen(true)} disabled={isSaving}>
+                    Preview
+                </Button>
                 <Button size="sm" onClick={handleSubmit} disabled={isSaving}>
                     {isSaving ? 'Saving...' : 'Save Book'}
                 </Button>
@@ -230,6 +237,10 @@ export function BookForm({ bookId, onSaveSuccess, onCancel }: BookFormProps) {
                         <div className="sm:col-span-2">
                             <Label htmlFor="details">Details</Label>
                             <Input id="details" name="details" placeholder="e.g. Hardcover, 224 pages" value={formData.details} onChange={handleChange} className="mt-1" />
+                        </div>
+                         <div className="sm:col-span-2">
+                            <Label htmlFor="sampleText">Sample Text</Label>
+                            <Textarea id="sampleText" name="sampleText" value={formData.sampleText} onChange={handleChange} className="mt-1" rows={5} />
                         </div>
                     </div>
                     <div className="space-y-6">
@@ -313,10 +324,59 @@ export function BookForm({ bookId, onSaveSuccess, onCancel }: BookFormProps) {
             <Button variant="outline" onClick={onCancel} disabled={isSaving}>
                 Cancel
             </Button>
+            <Button variant="outline" size="sm" onClick={() => setIsPreviewOpen(true)} disabled={isSaving}>
+                Preview
+            </Button>
             <Button onClick={handleSubmit} disabled={isSaving}>
                 {isSaving ? 'Saving...' : 'Save Book'}
             </Button>
         </div>
+        <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
+            <DialogContent className="max-w-3xl">
+                <DialogHeader>
+                    <DialogTitle>Book Preview</DialogTitle>
+                    <DialogDescription>This is how the book details will look.</DialogDescription>
+                </DialogHeader>
+                <ScrollArea className="max-h-[70vh] pr-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 py-4">
+                         <div className="md:col-span-1">
+                             {formData.imageUrl ? (
+                                <Image src={formData.imageUrl} alt={formData.title || 'Book cover'} width={400} height={600} className="object-cover w-full rounded-lg shadow-lg" />
+                            ) : (
+                                <div className="aspect-[2/3] w-full bg-muted rounded-lg flex items-center justify-center">
+                                    <BookImage className="h-16 w-16 text-gray-400" />
+                                </div>
+                            )}
+                         </div>
+                         <div className="md:col-span-2 space-y-4">
+                            <div>
+                                <h2 className="text-2xl font-bold">{formData.title || "Untitled Book"}</h2>
+                                <p className="text-lg text-muted-foreground">by {formData.author || 'Unknown Author'}</p>
+                            </div>
+                            <div className="flex items-center gap-4 text-sm">
+                                <span className="font-semibold">${(formData.price || 0).toFixed(2)}</span>
+                                <span className="text-muted-foreground">{formData.category}</span>
+                                <span className="text-muted-foreground">{formData.details}</span>
+                            </div>
+                             <div>
+                                <h3 className="font-semibold border-b pb-2 mb-2">Description</h3>
+                                <p className="text-sm text-muted-foreground">{formData.description || "No description provided."}</p>
+                            </div>
+                             <div>
+                                <h3 className="font-semibold border-b pb-2 mb-2">Sample Text</h3>
+                                <p className="text-sm text-muted-foreground whitespace-pre-wrap">{formData.sampleText || "No sample text provided."}</p>
+                            </div>
+                         </div>
+                    </div>
+                </ScrollArea>
+                <DialogFooter>
+                    <DialogClose asChild>
+                        <Button type="button" variant="secondary">Close</Button>
+                    </DialogClose>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     </div>
   );
 }
+

@@ -17,6 +17,7 @@ export type Book = {
   details: string;
   imageUrl: string;
   supplementaryFiles: SupplementaryFile[];
+  sampleText: string;
 };
 
 export type Order = {
