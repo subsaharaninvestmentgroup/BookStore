@@ -23,10 +23,13 @@ export default function BookPage({ params }: { params: { id: string } }) {
     const [loading, setLoading] = React.useState(true);
 
     React.useEffect(() => {
+        const bookId = params.id;
+        if (!bookId) return;
+
         const fetchBook = async () => {
             setLoading(true);
             try {
-                const docRef = doc(db, 'books', params.id);
+                const docRef = doc(db, 'books', bookId);
                 const docSnap = await getDoc(docRef);
 
                 if (docSnap.exists()) {
@@ -42,9 +45,7 @@ export default function BookPage({ params }: { params: { id: string } }) {
             }
         };
 
-        if(params.id) {
-            fetchBook();
-        }
+        fetchBook();
     }, [params.id]);
 
     if (loading) {
