@@ -70,62 +70,64 @@ const BookForm = ({ book, onSave, onCancel }: { book?: Book | null, onSave: (boo
   };
 
   return (
-    <DialogContent className="sm:max-w-2xl">
+    <DialogContent className="sm:max-w-3xl">
       <DialogHeader>
         <DialogTitle>{book ? 'Edit Book' : 'Add New Book'}</DialogTitle>
         <DialogDescription>
           {book ? 'Update the details of the book.' : 'Fill in the details for the new book.'}
         </DialogDescription>
       </DialogHeader>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
-        <div className="space-y-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="title" className="text-right">Title</Label>
-                <Input id="title" name="title" value={formData.title} onChange={handleChange} className="col-span-3" />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 py-4">
+        <div className="md:col-span-2 grid grid-cols-2 gap-x-6 gap-y-4">
+            <div className='col-span-2'>
+                <Label htmlFor="title">Title</Label>
+                <Input id="title" name="title" value={formData.title} onChange={handleChange} className="mt-1" />
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="author" className="text-right">Author</Label>
-                <Input id="author" name="author" value={formData.author} onChange={handleChange} className="col-span-3" />
+            <div className='col-span-2'>
+                <Label htmlFor="author">Author</Label>
+                <Input id="author" name="author" value={formData.author} onChange={handleChange} className="mt-1" />
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="category" className="text-right">Category</Label>
-                <Input id="category" name="category" value={formData.category} onChange={handleChange} className="col-span-3" />
+            <div>
+                <Label htmlFor="category">Category</Label>
+                <Input id="category" name="category" value={formData.category} onChange={handleChange} className="mt-1" />
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="price" className="text-right">Price</Label>
-                <Input id="price" name="price" type="number" value={formData.price} onChange={handleChange} className="col-span-3" />
+            <div>
+                <Label htmlFor="publicationDate">Published Date</Label>
+                <Input id="publicationDate" name="publicationDate" type="date" value={formData.publicationDate} onChange={handleChange} className="mt-1" />
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="stock" className="text-right">Stock</Label>
-                <Input id="stock" name="stock" type="number" value={formData.stock} onChange={handleChange} className="col-span-3" />
+            <div>
+                <Label htmlFor="price">Price</Label>
+                <Input id="price" name="price" type="number" value={formData.price} onChange={handleChange} className="mt-1" />
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="publicationDate" className="text-right">Published</Label>
-                <Input id="publicationDate" name="publicationDate" type="date" value={formData.publicationDate} onChange={handleChange} className="col-span-3" />
+            <div>
+                <Label htmlFor="stock">Stock</Label>
+                <Input id="stock" name="stock" type="number" value={formData.stock} onChange={handleChange} className="mt-1" />
             </div>
-            <div className="grid grid-cols-4 items-start gap-4">
-                <Label htmlFor="description" className="text-right pt-2">Description</Label>
-                <Textarea id="description" name="description" value={formData.description} onChange={handleChange} className="col-span-3" />
+            <div className="col-span-2">
+                <Label htmlFor="description">Description</Label>
+                <Textarea id="description" name="description" value={formData.description} onChange={handleChange} className="mt-1" />
             </div>
-            <div className="grid grid-cols-4 items-start gap-4">
-                <Label htmlFor="details" className="text-right pt-2">Details</Label>
-                <Textarea id="details" name="details" placeholder='e.g. Hardcover, 224 pages' value={formData.details} onChange={handleChange} className="col-span-3" />
+            <div className="col-span-2">
+                <Label htmlFor="details">Details</Label>
+                <Input id="details" name="details" placeholder='e.g. Hardcover, 224 pages' value={formData.details} onChange={handleChange} className="mt-1" />
             </div>
         </div>
         <div className='space-y-4'>
-            <div className="grid w-full items-center gap-1.5">
+            <div>
                 <Label htmlFor="imageUrl">Image URL</Label>
-                <Input id="imageUrl" name="imageUrl" placeholder="https://example.com/image.jpg" value={formData.imageUrl} onChange={handleChange} />
+                <Input id="imageUrl" name="imageUrl" placeholder="https://example.com/image.jpg" value={formData.imageUrl} onChange={handleChange} className='mt-1' />
             </div>
             <div className='aspect-[2/3] w-full bg-muted rounded-lg flex items-center justify-center overflow-hidden'>
                 {formData.imageUrl ? (
                     <Image src={formData.imageUrl} alt={formData.title || 'Book cover'} width={400} height={600} className="object-cover w-full h-full" />
                 ) : (
-                    <p className='text-sm text-muted-foreground'>Image preview</p>
+                    <div className='text-center text-sm text-muted-foreground p-4'>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="mx-auto text-gray-400"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
+                        <p className='mt-2'>Image preview</p>
+                    </div>
                 )}
             </div>
         </div>
-
       </div>
       <DialogFooter>
         <Button variant="outline" onClick={onCancel}>Cancel</Button>
