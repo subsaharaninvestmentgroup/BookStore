@@ -2,7 +2,7 @@
 'use client';
 
 import * as React from 'react';
-import { MoreHorizontal, PlusCircle, File, ListFilter } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, File, ListFilter, Store } from 'lucide-react';
 import type { Book } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -37,6 +37,7 @@ import { db, storage } from '@/lib/firebase';
 import { collection, deleteDoc, doc, getDocs } from 'firebase/firestore';
 import { deleteObject, ref } from 'firebase/storage';
 import { useToast } from '@/hooks/use-toast';
+import Link from 'next/link';
 
 type BooksProps = {
     onAddBook: () => void;
@@ -157,6 +158,14 @@ export default function Books({ onAddBook, onEditBook }: BooksProps) {
                 Export
                 </span>
               </Button>
+              <Link href="/store" legacyBehavior>
+                <Button size="sm" variant="outline" className="h-8 gap-1 w-full sm:w-auto">
+                  <Store className="h-3.5 w-3.5" />
+                  <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                  View Storefront
+                  </span>
+                </Button>
+              </Link>
               <Button size="sm" className="h-8 gap-1 w-full sm:w-auto" onClick={onAddBook}>
                 <PlusCircle className="h-3.5 w-3.5" />
                 <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
@@ -253,3 +262,5 @@ export default function Books({ onAddBook, onEditBook }: BooksProps) {
       </Card>
   );
 }
+
+    
