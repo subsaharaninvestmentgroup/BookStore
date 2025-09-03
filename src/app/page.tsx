@@ -13,6 +13,8 @@ import {
   Search,
   ShoppingCart,
   Users,
+  CheckCircle2,
+  AlertTriangle
 } from 'lucide-react';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { useRouter } from 'next/navigation';
@@ -45,6 +47,7 @@ import { BookForm } from '@/components/dashboard/book-form';
 import { BannerForm } from '@/components/dashboard/banner-form';
 import { doc, getDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
+import { checkApiStatusAction } from './actions';
 
 type View = 'overview' | 'orders' | 'books' | 'customers' | 'book-form' | 'banners' | 'banner-form';
 
@@ -57,6 +60,11 @@ export default function DashboardPage() {
   const [user, loading] = useAuthState(auth);
   const router = useRouter();
   const { toast } = useToast();
+  const [isApiAvailable, setIsApiAvailable] = React.useState<boolean | null>(null);
+
+  React.useEffect(() => {
+    checkApiStatusAction().then(setIsApiAvailable);
+  }, []);
 
   React.useEffect(() => {
     if (loading) return;
@@ -285,6 +293,19 @@ export default function DashboardPage() {
               className="w-full rounded-lg bg-background pl-8 md:w-[200px] lg:w-[336px]"
             />
           </div>
+          <TooltipProvider>
+            <Tooltip>
+                <TooltipTrigger>
+                    {isApiAvailable === true && <CheckCircle2 className="h-5 w-5 text-green-500" />}
+                    {isApiAvailable === false && <AlertTriangle className="h-5 w-5 text-destructive" />}
+                </TooltipTrigger>
+                <TooltipContent>
+                    {isApiAvailable === true && <p>Gemini API is available.</p>}
+                    {isApiAvailable === false && <p>Gemini API is not available. Check your API key.</p>}
+                    {isApiAvailable === null && <p>Checking API status...</p>}
+                </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
