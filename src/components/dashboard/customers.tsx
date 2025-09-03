@@ -83,6 +83,7 @@ const CustomerDetailSheet = ({ customer, open, onOpenChange }: { customer: Custo
               <div className='flex-1'>
                 <SheetTitle className="text-2xl">{customer.name}</SheetTitle>
                 <SheetDescription>{customer.email}</SheetDescription>
+                 <Badge variant={customer.isAdmin ? 'default' : 'secondary'}>{customer.isAdmin ? 'Admin' : 'Customer'}</Badge>
               </div>
             </div>
           </SheetHeader>
@@ -98,6 +99,10 @@ const CustomerDetailSheet = ({ customer, open, onOpenChange }: { customer: Custo
             <div className="col-span-2">
               <p className="text-muted-foreground">Total Spent</p>
               <p className="font-medium text-lg text-primary">${customer.totalSpent.toFixed(2)}</p>
+            </div>
+             <div className="col-span-2">
+              <p className="text-muted-foreground">Address</p>
+              <p className="font-medium">{customer.address || 'N/A'}</p>
             </div>
           </div>
           
@@ -185,7 +190,7 @@ export default function Customers() {
           <TableHeader>
             <TableRow>
               <TableHead>Name</TableHead>
-              <TableHead className="hidden sm:table-cell">Email</TableHead>
+              <TableHead className="hidden sm:table-cell">Role</TableHead>
               <TableHead className="hidden md:table-cell">Total Orders</TableHead>
               <TableHead className="text-right">Total Spent</TableHead>
               <TableHead>
@@ -211,7 +216,9 @@ export default function Customers() {
                     </Avatar>
                     {customer.name}
                 </TableCell>
-                <TableCell className="hidden sm:table-cell">{customer.email}</TableCell>
+                <TableCell className="hidden sm:table-cell">
+                    <Badge variant={customer.isAdmin ? 'default' : 'secondary'}>{customer.isAdmin ? 'Admin' : 'Customer'}</Badge>
+                </TableCell>
                 <TableCell className="hidden md:table-cell">{customer.totalOrders}</TableCell>
                 <TableCell className="text-right">${customer.totalSpent.toFixed(2)}</TableCell>
                 <TableCell>

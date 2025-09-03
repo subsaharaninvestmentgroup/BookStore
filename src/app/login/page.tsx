@@ -13,10 +13,11 @@ import { Label } from "@/components/ui/label"
 import { Logo, GoogleIcon } from "@/components/icons"
 import Link from "next/link"
 import * as React from 'react';
-import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from "firebase/auth"
-import { auth } from "@/lib/firebase"
+import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, signOut } from "firebase/auth"
+import { auth, db } from "@/lib/firebase"
 import { useRouter } from "next/navigation"
 import { useToast } from "@/hooks/use-toast";
+import { doc, getDoc } from "firebase/firestore";
 
 export default function LoginPage() {
     const [email, setEmail] = React.useState('');
@@ -24,11 +25,27 @@ export default function LoginPage() {
     const router = useRouter();
     const { toast } = useToast();
 
+    const checkAdminAndRedirect = async (userId: string) => {
+        const customerRef = doc(db, 'customers', userId);
+        const customerSnap = await getDoc(customerRef);
+
+        if (customerSnap.exists() && customerSnap.data()?.isAdmin) {
+            router.push('/');
+        } else {
+            await signOut(auth);
+            toast({
+                variant: 'destructive',
+                title: 'Access Denied',
+                description: 'You do not have permission to access the dashboard.',
+            });
+        }
+    };
+
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            await signInWithEmailAndPassword(auth, email, password);
-            router.push('/');
+            const userCredential = await signInWithEmailAndPassword(auth, email, password);
+            await checkAdminAndRedirect(userCredential.user.uid);
         } catch (error: any) {
             toast({
                 variant: 'destructive',
@@ -41,8 +58,8 @@ export default function LoginPage() {
     const handleGoogleSignIn = async () => {
         const provider = new GoogleAuthProvider();
         try {
-            await signInWithPopup(auth, provider);
-            router.push('/');
+            const result = await signInWithPopup(auth, provider);
+            await checkAdminAndRedirect(result.user.uid);
         } catch (error: any) {
             toast({
                 variant: 'destructive',

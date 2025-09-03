@@ -38,4 +38,6 @@ export type Customer = {
   totalOrders: number;
   totalSpent: number;
   joinDate: string;
+  address: string;
+  isAdmin?: boolean;
 };

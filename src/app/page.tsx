@@ -36,10 +36,12 @@ import Customers from '@/components/dashboard/customers';
 import { Logo } from '@/components/icons';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { auth } from '@/lib/firebase';
+import { auth, db } from '@/lib/firebase';
 import { signOut } from 'firebase/auth';
 import Link from 'next/link';
 import { BookForm } from '@/components/dashboard/book-form';
+import { doc, getDoc } from 'firebase/firestore';
+import { useToast } from '@/hooks/use-toast';
 
 type View = 'overview' | 'orders' | 'books' | 'customers' | 'book-form';
 
@@ -50,12 +52,31 @@ export default function DashboardPage() {
   const [isCollapsed, setIsCollapsed] = React.useState(isMobile);
   const [user, loading] = useAuthState(auth);
   const router = useRouter();
+  const { toast } = useToast();
 
   React.useEffect(() => {
-    if (!loading && !user) {
+    if (loading) return;
+    if (!user) {
       router.push('/login');
+      return;
     }
-  }, [user, loading, router]);
+
+    const checkAdmin = async () => {
+      const customerRef = doc(db, 'customers', user.uid);
+      const customerSnap = await getDoc(customerRef);
+      if (!customerSnap.exists() || !customerSnap.data()?.isAdmin) {
+        await signOut(auth);
+        toast({
+          variant: 'destructive',
+          title: 'Access Denied',
+          description: 'You do not have permission to access the dashboard.',
+        });
+        router.push('/login');
+      }
+    };
+
+    checkAdmin();
+  }, [user, loading, router, toast]);
   
   React.useEffect(() => {
     setIsCollapsed(isMobile);
