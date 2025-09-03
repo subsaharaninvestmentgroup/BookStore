@@ -90,12 +90,12 @@ const BookForm = ({ book, onSave, onCancel }: { book?: Book | null, onSave: (boo
         </DialogDescription>
       </DialogHeader>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 py-4">
-        <div className="md:col-span-2 grid grid-cols-2 gap-x-6 gap-y-4">
-            <div className='col-span-2'>
+        <div className="md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
+            <div className='sm:col-span-2'>
                 <Label htmlFor="title">Title</Label>
                 <Input id="title" name="title" value={formData.title} onChange={handleChange} className="mt-1" />
             </div>
-            <div className='col-span-2'>
+            <div className='sm:col-span-2'>
                 <Label htmlFor="author">Author</Label>
                 <Input id="author" name="author" value={formData.author} onChange={handleChange} className="mt-1" />
             </div>
@@ -115,11 +115,11 @@ const BookForm = ({ book, onSave, onCancel }: { book?: Book | null, onSave: (boo
                 <Label htmlFor="stock">Stock</Label>
                 <Input id="stock" name="stock" type="number" value={formData.stock} onChange={handleChange} className="mt-1" />
             </div>
-            <div className="col-span-2">
+            <div className="sm:col-span-2">
                 <Label htmlFor="description">Description</Label>
                 <Textarea id="description" name="description" value={formData.description} onChange={handleChange} className="mt-1" />
             </div>
-            <div className="col-span-2">
+            <div className="sm:col-span-2">
                 <Label htmlFor="details">Details</Label>
                 <Input id="details" name="details" placeholder='e.g. Hardcover, 224 pages' value={formData.details} onChange={handleChange} className="mt-1" />
             </div>
@@ -202,7 +202,7 @@ export default function Books() {
     <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <CardTitle>Books</CardTitle>
               <CardDescription>
@@ -212,7 +212,7 @@ export default function Books() {
             <div className="flex items-center gap-2">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="h-8 gap-1">
+                <Button variant="outline" size="sm" className="h-8 gap-1 w-full sm:w-auto">
                     <ListFilter className="h-3.5 w-3.5" />
                     <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
                     Filter
@@ -232,13 +232,13 @@ export default function Books() {
                   </DropdownMenuRadioGroup>
                 </DropdownMenuContent>
               </DropdownMenu>
-              <Button size="sm" variant="outline" className="h-8 gap-1">
+              <Button size="sm" variant="outline" className="h-8 gap-1 w-full sm:w-auto">
                 <File className="h-3.5 w-3.5" />
                 <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
                 Export
                 </span>
               </Button>
-              <Button size="sm" className="h-8 gap-1" onClick={handleAddNew}>
+              <Button size="sm" className="h-8 gap-1 w-full sm:w-auto" onClick={handleAddNew}>
                 <PlusCircle className="h-3.5 w-3.5" />
                 <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
                 Add Book
@@ -255,9 +255,9 @@ export default function Books() {
                 <span className="sr-only">Image</span>
               </TableHead>
               <TableHead>Title</TableHead>
-              <TableHead>Author</TableHead>
-              <TableHead>Category</TableHead>
-              <TableHead>Stock</TableHead>
+              <TableHead className="hidden md:table-cell">Author</TableHead>
+              <TableHead className="hidden md:table-cell">Category</TableHead>
+              <TableHead className="hidden sm:table-cell">Stock</TableHead>
               <TableHead className="text-right">Price</TableHead>
               <TableHead>
                   <span className="sr-only">Actions</span>
@@ -278,11 +278,11 @@ export default function Books() {
                     />
                   </TableCell>
                   <TableCell className="font-medium">{book.title}</TableCell>
-                  <TableCell>{book.author}</TableCell>
-                  <TableCell>
+                  <TableCell className="hidden md:table-cell">{book.author}</TableCell>
+                  <TableCell className="hidden md:table-cell">
                   <Badge variant="outline">{book.category}</Badge>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="hidden sm:table-cell">
                   {book.stock > 0 ? (
                       <span className={book.stock < 10 ? 'text-destructive font-semibold' : ''}>
                       {book.stock} in stock
@@ -322,5 +322,3 @@ export default function Books() {
     </Dialog>
   );
 }
-
-    

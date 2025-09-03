@@ -32,12 +32,18 @@ import Orders from '@/components/dashboard/orders';
 import Customers from '@/components/dashboard/customers';
 import { Logo } from '@/components/icons';
 import { cn } from '@/lib/utils';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 type View = 'overview' | 'orders' | 'books' | 'customers';
 
 export default function DashboardPage() {
   const [activeView, setActiveView] = React.useState<View>('overview');
-  const [isCollapsed, setIsCollapsed] = React.useState(true);
+  const isMobile = useIsMobile();
+  const [isCollapsed, setIsCollapsed] = React.useState(isMobile);
+
+  React.useEffect(() => {
+    setIsCollapsed(isMobile);
+  }, [isMobile]);
 
   const renderView = () => {
     switch (activeView) {
@@ -74,15 +80,17 @@ export default function DashboardPage() {
             <Logo className="h-6 w-6" />
             <span className={cn(isCollapsed && 'hidden')}>LitManager</span>
           </a>
-          <Button
-            variant="outline"
-            size="icon"
-            className="ml-auto h-8 w-8"
-            onClick={() => setIsCollapsed(!isCollapsed)}
-          >
-            {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
-            <span className="sr-only">Toggle Sidebar</span>
-          </Button>
+          {!isMobile && (
+            <Button
+              variant="outline"
+              size="icon"
+              className="ml-auto h-8 w-8"
+              onClick={() => setIsCollapsed(!isCollapsed)}
+            >
+              {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+              <span className="sr-only">Toggle Sidebar</span>
+            </Button>
+          )}
         </div>
         <nav className="flex flex-col items-start gap-2 px-2 py-4 sm:py-5">
           <TooltipProvider delayDuration={0}>

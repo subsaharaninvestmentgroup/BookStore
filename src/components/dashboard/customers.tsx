@@ -45,14 +45,14 @@ const CustomerDetailSheet = ({ customer, orders, open, onOpenChange }: { custome
   
     return (
       <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent className="sm:max-w-lg">
+        <SheetContent className="w-full max-w-full sm:max-w-lg">
           <SheetHeader className="mb-6">
-            <div className="flex items-center gap-4">
-              <Avatar className="h-16 w-16">
+            <div className="flex flex-col items-center gap-4 text-center sm:flex-row sm:text-left">
+              <Avatar className="h-24 w-24">
                 <AvatarImage src={`https://i.pravatar.cc/150?u=${customer.email}`} />
                 <AvatarFallback>{customer.name.charAt(0)}</AvatarFallback>
               </Avatar>
-              <div>
+              <div className='flex-1'>
                 <SheetTitle className="text-2xl">{customer.name}</SheetTitle>
                 <SheetDescription>{customer.email}</SheetDescription>
               </div>
@@ -129,8 +129,8 @@ export default function Customers() {
           <TableHeader>
             <TableRow>
               <TableHead>Name</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Total Orders</TableHead>
+              <TableHead className="hidden sm:table-cell">Email</TableHead>
+              <TableHead className="hidden md:table-cell">Total Orders</TableHead>
               <TableHead className="text-right">Total Spent</TableHead>
               <TableHead>
                 <span className="sr-only">Actions</span>
@@ -147,8 +147,8 @@ export default function Customers() {
                     </Avatar>
                     {customer.name}
                 </TableCell>
-                <TableCell>{customer.email}</TableCell>
-                <TableCell>{customer.totalOrders}</TableCell>
+                <TableCell className="hidden sm:table-cell">{customer.email}</TableCell>
+                <TableCell className="hidden md:table-cell">{customer.totalOrders}</TableCell>
                 <TableCell className="text-right">${customer.totalSpent.toFixed(2)}</TableCell>
                 <TableCell>
                   <DropdownMenu>
