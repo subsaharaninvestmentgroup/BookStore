@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '../ui/textarea';
-import { BookImage, ChevronLeft, Upload, Link as LinkIcon } from 'lucide-react';
+import { BookImage, ChevronLeft, Upload, Link as LinkIcon, Sparkles } from 'lucide-react';
 import Image from 'next/image';
 import { db, storage } from '@/lib/firebase';
 import { collection, addDoc, updateDoc, doc, getDoc, getDocs } from 'firebase/firestore';
@@ -17,6 +17,7 @@ import { v4 as uuidv4 } from 'uuid';
 import type { Banner, Book } from '@/lib/types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Switch } from '../ui/switch';
+import { generateBannerAction } from '@/app/actions';
 
 type BannerFormProps = {
     bannerId?: string;
@@ -38,7 +39,9 @@ export function BannerForm({ bannerId, onSaveSuccess, onCancel }: BannerFormProp
   const { toast } = useToast();
   const [isSaving, setIsSaving] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(!!bannerId);
+  const [isGenerating, setIsGenerating] = React.useState(false);
   const [books, setBooks] = React.useState<Book[]>([]);
+  const [selectedBook, setSelectedBook] = React.useState<Book | null>(null);
 
   React.useEffect(() => {
     const fetchBooks = async () => {
@@ -62,7 +65,12 @@ export function BannerForm({ bannerId, onSaveSuccess, onCancel }: BannerFormProp
           const bannerRef = doc(db, 'banners', bannerId);
           const bannerSnap = await getDoc(bannerRef);
           if (bannerSnap.exists()) {
-            setFormData({ ...bannerSnap.data(), id: bannerSnap.id } as Banner);
+            const bannerData = { ...bannerSnap.data(), id: bannerSnap.id } as Banner
+            setFormData(bannerData);
+            if(bannerData.bookId) {
+                const book = books.find(b => b.id === bannerData.bookId);
+                if (book) setSelectedBook(book);
+            }
           } else {
             toast({ variant: 'destructive', title: 'Error', description: 'Banner not found.' });
             onCancel();
@@ -75,7 +83,7 @@ export function BannerForm({ bannerId, onSaveSuccess, onCancel }: BannerFormProp
       };
       fetchBanner();
     }
-  }, [bannerId, onCancel, toast]);
+  }, [bannerId, onCancel, toast, books]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -83,7 +91,10 @@ export function BannerForm({ bannerId, onSaveSuccess, onCancel }: BannerFormProp
   };
   
   const handleSelectChange = (value: string) => {
-    setFormData(prev => ({ ...prev, bookId: value === 'none' ? '' : value }));
+    const bookId = value === 'none' ? '' : value;
+    setFormData(prev => ({ ...prev, bookId }));
+    const book = books.find(b => b.id === bookId);
+    setSelectedBook(book || null);
   };
   
   const handleSwitchChange = (checked: boolean) => {
@@ -101,6 +112,27 @@ export function BannerForm({ bannerId, onSaveSuccess, onCancel }: BannerFormProp
       reader.readAsDataURL(file);
     }
   };
+  
+  const handleGenerateDetails = async () => {
+    if(!selectedBook) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Please select a book first.'});
+        return;
+    }
+    setIsGenerating(true);
+    try {
+        const result = await generateBannerAction(selectedBook);
+        if(result) {
+            setFormData(prev => ({ ...prev, title: result.title, description: result.description }));
+            toast({ title: 'Success', description: 'Banner details generated.'});
+        } else {
+            toast({ variant: 'destructive', title: 'Error', description: 'Failed to generate banner details.'});
+        }
+    } catch (error: any) {
+        toast({ variant: 'destructive', title: 'Error', description: `Failed to generate details: ${error.message}` });
+    } finally {
+        setIsGenerating(false);
+    }
+  }
 
   const uploadFile = async (file: File, path: string): Promise<string> => {
     const storageRef = ref(storage, path);
@@ -173,8 +205,18 @@ export function BannerForm({ bannerId, onSaveSuccess, onCancel }: BannerFormProp
       </div>
         <Card>
             <CardHeader>
-                <CardTitle>Banner Details</CardTitle>
-                <CardDescription>Fill in the details for the promotional banner.</CardDescription>
+                <div className="flex justify-between items-start">
+                    <div>
+                        <CardTitle>Banner Details</CardTitle>
+                        <CardDescription>Fill in the details for the promotional banner.</CardDescription>
+                    </div>
+                    {selectedBook && (
+                        <Button variant="outline" size="sm" onClick={handleGenerateDetails} disabled={isGenerating}>
+                            <Sparkles className="mr-2 h-4 w-4" />
+                            {isGenerating ? 'Generating...' : 'Generate with AI'}
+                        </Button>
+                    )}
+                </div>
             </CardHeader>
             <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8 py-4">
