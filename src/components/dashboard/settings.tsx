@@ -17,7 +17,6 @@ const CURRENCIES = [
 ];
 
 export default function Settings() {
-    const [apiKey, setApiKey] = React.useState('');
     const [currency, setCurrency] = React.useState('ZAR');
     const { toast } = useToast();
 
@@ -27,7 +26,6 @@ export default function Settings() {
     }, []);
 
     const handleSaveSettings = () => {
-        // Save API Key logic would go here
         localStorage.setItem('bookstore-currency', currency);
         toast({
             title: 'Success',
@@ -48,23 +46,10 @@ export default function Settings() {
             <Card>
                 <CardHeader>
                     <CardTitle>Configuration</CardTitle>
-                    <CardDescription>Manage API keys and store preferences.</CardDescription>
+                    <CardDescription>Manage store preferences.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <div className="space-y-6 max-w-xl">
-                        <div className="space-y-2">
-                            <Label htmlFor="gemini-api-key">Gemini API Key</Label>
-                            <Input 
-                                id="gemini-api-key" 
-                                type="password" 
-                                placeholder="Enter your Gemini API Key" 
-                                value={apiKey} 
-                                onChange={(e) => setApiKey(e.target.value)} 
-                            />
-                            <p className="text-sm text-muted-foreground">
-                                Your Gemini API key is used for all AI-powered features.
-                            </p>
-                        </div>
                         <div className="space-y-2">
                             <Label htmlFor="currency">Currency</Label>
                              <Select value={currency} onValueChange={setCurrency}>
