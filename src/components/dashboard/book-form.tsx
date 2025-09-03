@@ -15,7 +15,6 @@ import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage
 import { useToast } from '@/hooks/use-toast';
 import { v4 as uuidv4 } from 'uuid';
 import type { Book, SupplementaryFile } from '@/lib/types';
-import { useRouter } from 'next/navigation';
 
 type UploadableFile = {
     file: File;
@@ -24,7 +23,13 @@ type UploadableFile = {
     type: string;
 };
 
-export function BookForm({ bookId }: { bookId?: string }) {
+type BookFormProps = {
+    bookId?: string;
+    onSaveSuccess: () => void;
+    onCancel: () => void;
+};
+
+export function BookForm({ bookId, onSaveSuccess, onCancel }: BookFormProps) {
   const [formData, setFormData] = React.useState<Partial<Book>>({
     title: '',
     author: '',
@@ -44,7 +49,6 @@ export function BookForm({ bookId }: { bookId?: string }) {
   const { toast } = useToast();
   const [isSaving, setIsSaving] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(!!bookId);
-  const router = useRouter();
 
   React.useEffect(() => {
     if (bookId) {
@@ -57,7 +61,7 @@ export function BookForm({ bookId }: { bookId?: string }) {
             setFormData({ ...bookSnap.data(), id: bookSnap.id } as Book);
           } else {
             toast({ variant: 'destructive', title: 'Error', description: 'Book not found.' });
-            router.push('/books');
+            onCancel();
           }
         } catch (error: any) {
           toast({ variant: 'destructive', title: 'Error', description: `Failed to fetch book: ${error.message}` });
@@ -67,7 +71,7 @@ export function BookForm({ bookId }: { bookId?: string }) {
       };
       fetchBook();
     }
-  }, [bookId, router, toast]);
+  }, [bookId, onCancel, toast]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
@@ -152,7 +156,7 @@ export function BookForm({ bookId }: { bookId?: string }) {
         await addDoc(collection(db, 'books'), bookData);
         toast({ title: 'Success', description: 'Book added successfully.' });
       }
-      router.push('/books');
+      onSaveSuccess();
     } catch (error: any) {
       toast({ variant: 'destructive', title: 'Error', description: `Failed to save book: ${error.message}` });
     } finally {
@@ -171,7 +175,7 @@ export function BookForm({ bookId }: { bookId?: string }) {
   return (
     <div className="mx-auto max-w-4xl">
         <div className="flex items-center gap-4 mb-4">
-            <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => router.back()}>
+            <Button variant="outline" size="icon" className="h-7 w-7" onClick={onCancel}>
                 <ChevronLeft className="h-4 w-4" />
                 <span className="sr-only">Back</span>
             </Button>
@@ -179,7 +183,7 @@ export function BookForm({ bookId }: { bookId?: string }) {
                 {bookId ? 'Edit Book' : 'Add New Book'}
             </h1>
             <div className="hidden items-center gap-2 md:ml-auto md:flex">
-                <Button variant="outline" size="sm" onClick={() => router.push('/books')} disabled={isSaving}>
+                <Button variant="outline" size="sm" onClick={onCancel} disabled={isSaving}>
                     Cancel
                 </Button>
                 <Button size="sm" onClick={handleSubmit} disabled={isSaving}>
@@ -306,7 +310,7 @@ export function BookForm({ bookId }: { bookId?: string }) {
             </CardContent>
         </Card>
         <div className="mt-4 flex items-center justify-end gap-2 md:hidden">
-            <Button variant="outline" onClick={() => router.push('/books')} disabled={isSaving}>
+            <Button variant="outline" onClick={onCancel} disabled={isSaving}>
                 Cancel
             </Button>
             <Button onClick={handleSubmit} disabled={isSaving}>

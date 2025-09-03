@@ -37,9 +37,13 @@ import { db, storage } from '@/lib/firebase';
 import { collection, deleteDoc, doc, getDocs } from 'firebase/firestore';
 import { deleteObject, ref } from 'firebase/storage';
 import { useToast } from '@/hooks/use-toast';
-import Link from 'next/link';
 
-export default function Books() {
+type BooksProps = {
+    onAddBook: () => void;
+    onEditBook: (bookId: string) => void;
+};
+
+export default function Books({ onAddBook, onEditBook }: BooksProps) {
   const [books, setBooks] = React.useState<Book[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [filter, setFilter] = React.useState('all');
@@ -153,14 +157,12 @@ export default function Books() {
                 Export
                 </span>
               </Button>
-              <Link href="/books/new">
-                <Button size="sm" className="h-8 gap-1 w-full sm:w-auto">
-                  <PlusCircle className="h-3.5 w-3.5" />
-                  <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                  Add Book
-                  </span>
-                </Button>
-              </Link>
+              <Button size="sm" className="h-8 gap-1 w-full sm:w-auto" onClick={onAddBook}>
+                <PlusCircle className="h-3.5 w-3.5" />
+                <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                Add Book
+                </span>
+              </Button>
             </div>
           </div>
         </CardHeader>
@@ -227,7 +229,7 @@ export default function Books() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                       <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                      <DropdownMenuItem onSelect={() => location.href = `/books/edit/${book.id}`}>Edit</DropdownMenuItem>
+                      <DropdownMenuItem onSelect={() => onEditBook(book.id)}>Edit</DropdownMenuItem>
                       <DropdownMenuItem onSelect={() => handleDeleteBook(book.id)} className="text-destructive">Delete</DropdownMenuItem>
                       </DropdownMenuContent>
                   </DropdownMenu>

@@ -39,15 +39,13 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { auth } from '@/lib/firebase';
 import { signOut } from 'firebase/auth';
 import Link from 'next/link';
+import { BookForm } from '@/components/dashboard/book-form';
 
-type View = 'overview' | 'orders' | 'books' | 'customers';
+type View = 'overview' | 'orders' | 'books' | 'customers' | 'book-form';
 
-export default function DashboardPage({
-    children,
-  }: {
-    children?: React.ReactNode;
-  }) {
+export default function DashboardPage() {
   const [activeView, setActiveView] = React.useState<View>('overview');
+  const [editingBookId, setEditingBookId] = React.useState<string | undefined>(undefined);
   const isMobile = useIsMobile();
   const [isCollapsed, setIsCollapsed] = React.useState(isMobile);
   const [user, loading] = useAuthState(auth);
@@ -67,28 +65,38 @@ export default function DashboardPage({
     signOut(auth);
   };
 
-  const renderView = () => {
-    if (children) return children;
+  const handleShowBookForm = (bookId?: string) => {
+    setEditingBookId(bookId);
+    setActiveView('book-form');
+  };
 
+  const handleBackToBooks = () => {
+    setActiveView('books');
+    setEditingBookId(undefined);
+  };
+
+  const renderView = () => {
     switch (activeView) {
       case 'overview':
         return <Overview />;
       case 'orders':
         return <Orders />;
       case 'books':
-        return <Books />;
+        return <Books onAddBook={() => handleShowBookForm()} onEditBook={handleShowBookForm} />;
       case 'customers':
         return <Customers />;
+      case 'book-form':
+        return <BookForm bookId={editingBookId} onSaveSuccess={handleBackToBooks} onCancel={handleBackToBooks} />;
       default:
         return <Overview />;
     }
   };
 
   const navItems = [
-    { name: 'overview', label: 'Dashboard', icon: Home, href: '/' },
-    { name: 'orders', label: 'Orders', icon: ShoppingCart, href: '/orders' },
-    { name: 'books', label: 'Books', icon: Book, href: '/books' },
-    { name: 'customers', label: 'Customers', icon: Users, href: '/customers' },
+    { name: 'overview', label: 'Dashboard', icon: Home },
+    { name: 'orders', label: 'Orders', icon: ShoppingCart },
+    { name: 'books', label: 'Books', icon: Book },
+    { name: 'customers', label: 'Customers', icon: Users },
   ];
 
   if (loading || !user) {
@@ -108,7 +116,7 @@ export default function DashboardPage({
         )}
       >
         <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
-          <Link href="/" className="flex items-center gap-2 font-semibold">
+          <Link href="#" onClick={() => setActiveView('overview')} className="flex items-center gap-2 font-semibold">
             <Logo className="h-6 w-6" />
             <span className={cn(isCollapsed && 'hidden')}>Bookstore</span>
           </Link>
@@ -130,9 +138,9 @@ export default function DashboardPage({
               isCollapsed ? (
                 <Tooltip key={item.name}>
                   <TooltipTrigger asChild>
-                    <Link
-                      href={item.href}
-                      onClick={() => setActiveView(item.name as View)}
+                    <a
+                      href="#"
+                      onClick={(e) => { e.preventDefault(); setActiveView(item.name as View); }}
                       className={`flex h-9 w-9 items-center justify-center rounded-lg transition-colors md:h-8 md:w-8 w-full ${
                         activeView === item.name
                           ? 'bg-accent text-accent-foreground'
@@ -141,15 +149,15 @@ export default function DashboardPage({
                     >
                       <item.icon className="h-5 w-5" />
                       <span className="sr-only">{item.label}</span>
-                    </Link>
+                    </a>
                   </TooltipTrigger>
                   <TooltipContent side="right">{item.label}</TooltipContent>
                 </Tooltip>
               ) : (
-                <Link
+                <a
                   key={item.name}
-                  href={item.href}
-                  onClick={() => setActiveView(item.name as View)}
+                  href="#"
+                  onClick={(e) => { e.preventDefault(); setActiveView(item.name as View); }}
                   className={cn(
                     'flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary w-full',
                     activeView === item.name && 'bg-accent text-accent-foreground hover:text-accent-foreground'
@@ -157,7 +165,7 @@ export default function DashboardPage({
                 >
                   <item.icon className="h-4 w-4" />
                   {item.label}
-                </Link>
+                </a>
               )
             )}
           </TooltipProvider>
@@ -202,16 +210,18 @@ export default function DashboardPage({
               <nav className="grid gap-6 text-lg font-medium">
                 <a
                   href="#"
+                  onClick={(e) => { e.preventDefault(); setActiveView('overview'); }}
                   className="group flex h-10 w-10 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:text-base"
                 >
                   <Logo className="h-5 w-5 transition-all group-hover:scale-110" />
                   <span className="sr-only">Bookstore</span>
                 </a>
                 {navItems.map((item) => (
-                  <Link
+                  <a
                     key={item.name}
-                    href={item.href}
-                    onClick={() => {
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
                       setActiveView(item.name as View);
                     }}
                     className={`flex items-center gap-4 px-2.5 ${
@@ -222,7 +232,7 @@ export default function DashboardPage({
                   >
                     <item.icon className="h-5 w-5" />
                     {item.label}
-                  </Link>
+                  </a>
                 ))}
               </nav>
             </SheetContent>
@@ -262,4 +272,3 @@ export default function DashboardPage({
     </div>
   );
 }
-
