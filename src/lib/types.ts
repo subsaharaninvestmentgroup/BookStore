@@ -41,3 +41,13 @@ export type Customer = {
   address: string;
   isAdmin?: boolean;
 };
+
+export type Banner = {
+  id: string;
+  title: string;
+  description: string;
+  imageUrl: string;
+  callToAction: string;
+  bookId: string;
+  isActive: boolean;
+};

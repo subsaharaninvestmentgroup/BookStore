@@ -7,6 +7,7 @@ import {
   ChevronLeft,
   ChevronRight,
   CircleUser,
+  GalleryHorizontal,
   Home,
   PanelLeft,
   Search,
@@ -33,6 +34,7 @@ import Overview from '@/components/dashboard/overview';
 import Books from '@/components/dashboard/books';
 import Orders from '@/components/dashboard/orders';
 import Customers from '@/components/dashboard/customers';
+import Banners from '@/components/dashboard/banners';
 import { Logo } from '@/components/icons';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -40,14 +42,16 @@ import { auth, db } from '@/lib/firebase';
 import { signOut } from 'firebase/auth';
 import Link from 'next/link';
 import { BookForm } from '@/components/dashboard/book-form';
+import { BannerForm } from '@/components/dashboard/banner-form';
 import { doc, getDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 
-type View = 'overview' | 'orders' | 'books' | 'customers' | 'book-form';
+type View = 'overview' | 'orders' | 'books' | 'customers' | 'book-form' | 'banners' | 'banner-form';
 
 export default function DashboardPage() {
   const [activeView, setActiveView] = React.useState<View>('overview');
   const [editingBookId, setEditingBookId] = React.useState<string | undefined>(undefined);
+  const [editingBannerId, setEditingBannerId] = React.useState<string | undefined>(undefined);
   const isMobile = useIsMobile();
   const [isCollapsed, setIsCollapsed] = React.useState(isMobile);
   const [user, loading] = useAuthState(auth);
@@ -95,6 +99,16 @@ export default function DashboardPage() {
     setActiveView('books');
     setEditingBookId(undefined);
   };
+  
+  const handleShowBannerForm = (bannerId?: string) => {
+    setEditingBannerId(bannerId);
+    setActiveView('banner-form');
+  };
+
+  const handleBackToBanners = () => {
+    setActiveView('banners');
+    setEditingBannerId(undefined);
+  };
 
   const renderView = () => {
     switch (activeView) {
@@ -108,6 +122,10 @@ export default function DashboardPage() {
         return <Customers />;
       case 'book-form':
         return <BookForm bookId={editingBookId} onSaveSuccess={handleBackToBooks} onCancel={handleBackToBooks} />;
+      case 'banners':
+        return <Banners onAddBanner={() => handleShowBannerForm()} onEditBanner={handleShowBannerForm} />;
+      case 'banner-form':
+        return <BannerForm bannerId={editingBannerId} onSaveSuccess={handleBackToBanners} onCancel={handleBackToBanners} />;
       default:
         return <Overview />;
     }
@@ -118,6 +136,7 @@ export default function DashboardPage() {
     { name: 'orders', label: 'Orders', icon: ShoppingCart },
     { name: 'books', label: 'Books', icon: Book },
     { name: 'customers', label: 'Customers', icon: Users },
+    { name: 'banners', label: 'Banners', icon: GalleryHorizontal },
   ];
 
   if (loading || !user) {
