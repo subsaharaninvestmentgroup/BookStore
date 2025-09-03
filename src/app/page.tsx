@@ -4,9 +4,10 @@ import * as React from 'react';
 import {
   Book,
   Bot,
+  ChevronLeft,
+  ChevronRight,
   CircleUser,
   Home,
-  Package2,
   PanelLeft,
   Search,
   ShoppingCart,
@@ -14,16 +15,6 @@ import {
 } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 
-import {
-  SidebarProvider,
-  Sidebar,
-  SidebarHeader,
-  SidebarContent,
-  SidebarMenu,
-  SidebarMenuItem,
-  SidebarMenuButton,
-  SidebarFooter,
-} from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -43,12 +34,13 @@ import Orders from '@/components/dashboard/orders';
 import Customers from '@/components/dashboard/customers';
 import Forecasting from '@/components/dashboard/forecasting';
 import { Logo } from '@/components/icons';
+import { cn } from '@/lib/utils';
 
 type View = 'overview' | 'orders' | 'books' | 'customers' | 'forecasting';
 
 export default function DashboardPage() {
   const [activeView, setActiveView] = React.useState<View>('overview');
-  const [isCollapsed, setIsCollapsed] = React.useState(false);
+  const [isCollapsed, setIsCollapsed] = React.useState(true);
 
   const renderView = () => {
     switch (activeView) {
@@ -77,34 +69,61 @@ export default function DashboardPage() {
 
   return (
     <div className="flex min-h-screen w-full flex-col bg-muted/40">
-      <aside className="fixed inset-y-0 left-0 z-10 hidden w-14 flex-col border-r bg-background sm:flex">
-        <nav className="flex flex-col items-center gap-4 px-2 sm:py-5">
-          <a
-            href="#"
-            className="group flex h-9 w-9 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:h-8 md:w-8 md:text-base"
-          >
-            <Logo className="h-5 w-5 transition-all group-hover:scale-110" />
-            <span className="sr-only">LitManager</span>
+      <aside
+        className={cn(
+          'fixed inset-y-0 left-0 z-10 hidden flex-col border-r bg-background transition-all duration-300 sm:flex',
+          isCollapsed ? 'w-14' : 'w-64'
+        )}
+      >
+        <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
+          <a href="#" className="flex items-center gap-2 font-semibold">
+            <Logo className="h-6 w-6" />
+            <span className={cn(isCollapsed && 'hidden')}>LitManager</span>
           </a>
-          <TooltipProvider>
-            {navItems.map((item) => (
-              <Tooltip key={item.name}>
-                <TooltipTrigger asChild>
-                  <button
-                    onClick={() => setActiveView(item.name as View)}
-                    className={`flex h-9 w-9 items-center justify-center rounded-lg transition-colors md:h-8 md:w-8 ${
-                      activeView === item.name
-                        ? 'bg-accent text-accent-foreground'
-                        : 'text-muted-foreground hover:text-foreground'
-                    }`}
-                  >
-                    <item.icon className="h-5 w-5" />
-                    <span className="sr-only">{item.label}</span>
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="right">{item.label}</TooltipContent>
-              </Tooltip>
-            ))}
+          <Button
+            variant="outline"
+            size="icon"
+            className="ml-auto h-8 w-8"
+            onClick={() => setIsCollapsed(!isCollapsed)}
+          >
+            {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+            <span className="sr-only">Toggle Sidebar</span>
+          </Button>
+        </div>
+        <nav className="flex flex-col items-start gap-2 px-2 py-4 sm:py-5">
+          <TooltipProvider delayDuration={0}>
+            {navItems.map((item) =>
+              isCollapsed ? (
+                <Tooltip key={item.name}>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={() => setActiveView(item.name as View)}
+                      className={`flex h-9 w-9 items-center justify-center rounded-lg transition-colors md:h-8 md:w-8 w-full ${
+                        activeView === item.name
+                          ? 'bg-accent text-accent-foreground'
+                          : 'text-muted-foreground hover:text-foreground'
+                      }`}
+                    >
+                      <item.icon className="h-5 w-5" />
+                      <span className="sr-only">{item.label}</span>
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="right">{item.label}</TooltipContent>
+                </Tooltip>
+              ) : (
+                <button
+                  key={item.name}
+                  onClick={() => setActiveView(item.name as View)}
+                  className={cn(
+                    'flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary w-full',
+                    activeView === item.name && 'bg-accent text-accent-foreground hover:text-accent-foreground'
+                  )}
+                >
+                  <item.icon className="h-4 w-4" />
+                  {item.label}
+                </button>
+              )
+            )}
           </TooltipProvider>
         </nav>
         <nav className="mt-auto flex flex-col items-center gap-4 px-2 sm:py-5">
@@ -129,7 +148,12 @@ export default function DashboardPage() {
           </DropdownMenu>
         </nav>
       </aside>
-      <div className="flex flex-col sm:gap-4 sm:py-4 sm:pl-14">
+      <div
+        className={cn(
+          'flex flex-col sm:gap-4 sm:py-4 transition-all duration-300',
+          isCollapsed ? 'sm:pl-14' : 'sm:pl-64'
+        )}
+      >
         <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
           <Sheet>
             <SheetTrigger asChild>
@@ -150,7 +174,9 @@ export default function DashboardPage() {
                 {navItems.map((item) => (
                   <button
                     key={item.name}
-                    onClick={() => setActiveView(item.name as View)}
+                    onClick={() => {
+                      setActiveView(item.name as View);
+                    }}
                     className={`flex items-center gap-4 px-2.5 ${
                       activeView === item.name
                         ? 'text-foreground'
@@ -164,9 +190,9 @@ export default function DashboardPage() {
               </nav>
             </SheetContent>
           </Sheet>
-           <div className="relative ml-auto flex-1 md:grow-0">
-             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-             <Input
+          <div className="relative ml-auto flex-1 md:grow-0">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
               type="search"
               placeholder="Search..."
               className="w-full rounded-lg bg-background pl-8 md:w-[200px] lg:w-[336px]"

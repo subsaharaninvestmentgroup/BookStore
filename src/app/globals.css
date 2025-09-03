@@ -10,13 +10,13 @@
     --card-foreground: 222.2 84% 4.9%;
     --popover: 34 78% 95%;
     --popover-foreground: 222.2 84% 4.9%;
-    --primary: 218 73% 23%;
+    --primary: 218 80% 23%;
     --primary-foreground: 210 40% 98%;
     --secondary: 208 78% 37%;
     --secondary-foreground: 210 40% 98%;
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 201 71% 51%;
+    --accent: 201 80% 51%;
     --accent-foreground: 210 40% 98%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
@@ -78,5 +78,14 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  .bg-sidebar {
+    background-color: hsl(var(--sidebar-background));
+  }
+  .text-sidebar-foreground {
+    color: hsl(var(--sidebar-foreground));
   }
 }
