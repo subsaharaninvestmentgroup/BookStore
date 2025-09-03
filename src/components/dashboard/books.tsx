@@ -53,7 +53,7 @@ export default function Books({ onAddBook, onEditBook }: BooksProps) {
   const [currencySymbol, setCurrencySymbol] = React.useState('$');
 
   React.useEffect(() => {
-    const savedCurrency = localStorage.getItem('bookstore-currency') || 'USD';
+    const savedCurrency = localStorage.getItem('bookstore-currency') || 'ZAR';
     setCurrencySymbol(getCurrencySymbol(savedCurrency));
   }, []);
 

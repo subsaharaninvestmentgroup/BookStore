@@ -25,7 +25,7 @@ export default function BookPage({ params }: { params: { id: string } }) {
     const [currencySymbol, setCurrencySymbol] = React.useState('$');
 
      React.useEffect(() => {
-        const savedCurrency = localStorage.getItem('bookstore-currency') || 'USD';
+        const savedCurrency = localStorage.getItem('bookstore-currency') || 'ZAR';
         setCurrencySymbol(getCurrencySymbol(savedCurrency));
     }, []);
 
