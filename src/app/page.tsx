@@ -3,7 +3,6 @@
 import * as React from 'react';
 import {
   Book,
-  Bot,
   ChevronLeft,
   ChevronRight,
   CircleUser,
@@ -31,11 +30,10 @@ import Overview from '@/components/dashboard/overview';
 import Books from '@/components/dashboard/books';
 import Orders from '@/components/dashboard/orders';
 import Customers from '@/components/dashboard/customers';
-import Forecasting from '@/components/dashboard/forecasting';
 import { Logo } from '@/components/icons';
 import { cn } from '@/lib/utils';
 
-type View = 'overview' | 'orders' | 'books' | 'customers' | 'forecasting';
+type View = 'overview' | 'orders' | 'books' | 'customers';
 
 export default function DashboardPage() {
   const [activeView, setActiveView] = React.useState<View>('overview');
@@ -51,8 +49,6 @@ export default function DashboardPage() {
         return <Books />;
       case 'customers':
         return <Customers />;
-      case 'forecasting':
-        return <Forecasting />;
       default:
         return <Overview />;
     }
@@ -63,7 +59,6 @@ export default function DashboardPage() {
     { name: 'orders', label: 'Orders', icon: ShoppingCart },
     { name: 'books', label: 'Books', icon: Book },
     { name: 'customers', label: 'Customers', icon: Users },
-    { name: 'forecasting', label: 'Forecasting', icon: Bot },
   ];
 
   return (
