@@ -21,9 +21,9 @@ import {
 export default function BookPage({ params }: { params: { id: string } }) {
     const [book, setBook] = React.useState<Book | null>(null);
     const [loading, setLoading] = React.useState(true);
-    const bookId = params.id;
 
     React.useEffect(() => {
+        const bookId = params.id;
         if (!bookId) return;
 
         const fetchBook = async () => {
@@ -46,7 +46,7 @@ export default function BookPage({ params }: { params: { id: string } }) {
         };
 
         fetchBook();
-    }, [bookId]);
+    }, [params]);
 
     if (loading) {
         return (
