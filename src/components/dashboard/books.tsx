@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { MoreHorizontal, PlusCircle, File, ListFilter, Upload } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, File, ListFilter, Upload, X as XIcon, Paperclip, BookImage } from 'lucide-react';
 import { books as initialBooks } from '@/lib/data';
 import type { Book } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
@@ -57,9 +57,11 @@ const BookForm = ({ book, onSave, onCancel }: { book?: Book | null, onSave: (boo
         description: '', 
         publicationDate: '', 
         details: '', 
-        imageUrl: '' 
+        imageUrl: '',
+        supplementaryFiles: [],
     }
   );
+  const imageInputRef = React.useRef<HTMLInputElement>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -67,23 +69,50 @@ const BookForm = ({ book, onSave, onCancel }: { book?: Book | null, onSave: (boo
     setFormData(prev => ({ ...prev, [name]: type === 'number' ? parseFloat(value) || 0 : value }));
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setFormData(prev => ({ ...prev, imageUrl: reader.result as string, fileType: file.type }));
+        setFormData(prev => ({ ...prev, imageUrl: reader.result as string }));
       };
       reader.readAsDataURL(file);
     }
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files) {
+      const newFiles = Array.from(files).map(file => {
+        const reader = new FileReader();
+        return new Promise<{ name: string; url: string; type: string }>(resolve => {
+          reader.onloadend = () => {
+            resolve({
+              name: file.name,
+              url: reader.result as string,
+              type: file.type,
+            });
+          };
+          reader.readAsDataURL(file);
+        });
+      });
+      Promise.all(newFiles).then(processedFiles => {
+        setFormData(prev => ({ ...prev, supplementaryFiles: [...(prev.supplementaryFiles || []), ...processedFiles] }));
+      });
+    }
+  };
+
+  const removeSupplementaryFile = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      supplementaryFiles: prev.supplementaryFiles?.filter((_, i) => i !== index),
+    }));
+  }
+
   const handleSubmit = () => {
     onSave(formData as Book);
   };
   
-  const isImage = formData.fileType?.startsWith('image/');
-
   return (
     <DialogContent className="sm:max-w-3xl max-h-[90vh]">
       <DialogHeader>
@@ -128,36 +157,69 @@ const BookForm = ({ book, onSave, onCancel }: { book?: Book | null, onSave: (boo
                   <Input id="details" name="details" placeholder='e.g. Hardcover, 224 pages' value={formData.details} onChange={handleChange} className="mt-1" />
               </div>
           </div>
-          <div className='space-y-4'>
-              <div
-                className='aspect-[2/3] w-full bg-muted rounded-lg flex items-center justify-center overflow-hidden cursor-pointer'
-                onClick={() => fileInputRef.current?.click()}
-              >
-                  {formData.imageUrl ? (
-                      isImage ? (
+          <div className='space-y-6'>
+              <div>
+                <Label>Book Cover</Label>
+                <div
+                  className='mt-1 aspect-[2/3] w-full bg-muted rounded-lg flex items-center justify-center overflow-hidden cursor-pointer'
+                  onClick={() => imageInputRef.current?.click()}
+                >
+                    {formData.imageUrl ? (
                         <Image src={formData.imageUrl} alt={formData.title || 'Book cover'} width={400} height={600} className="object-cover w-full h-full" />
-                      ) : (
+                    ) : (
                         <div className='text-center text-sm text-muted-foreground p-4'>
-                          <File className="mx-auto h-12 w-12 text-gray-400" />
-                          <p className='mt-2'>File selected</p>
+                            <BookImage className="mx-auto h-12 w-12 text-gray-400" />
+                            <p className='mt-2'>Click to upload cover</p>
                         </div>
-                      )
-                  ) : (
-                      <div className='text-center text-sm text-muted-foreground p-4'>
-                          <Upload className="mx-auto h-12 w-12 text-gray-400" />
-                          <p className='mt-2'>Click to upload file</p>
-                      </div>
-                  )}
+                    )}
+                </div>
+                <Input
+                  id="imageUpload"
+                  name="imageUpload"
+                  type="file"
+                  accept="image/*"
+                  ref={imageInputRef}
+                  onChange={handleImageChange}
+                  className="hidden"
+                />
               </div>
-              <Input
-                id="fileUpload"
-                name="fileUpload"
-                type="file"
-                accept="image/*,application/pdf,.doc,.docx,.ppt,.pptx"
-                ref={fileInputRef}
-                onChange={handleFileChange}
-                className="hidden"
-              />
+              
+              <div>
+                <Label>Supplementary Files</Label>
+                <div
+                  className='mt-1 p-4 w-full bg-muted rounded-lg flex items-center justify-center overflow-hidden cursor-pointer border-2 border-dashed'
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                    <div className='text-center text-sm text-muted-foreground'>
+                        <Upload className="mx-auto h-8 w-8 text-gray-400" />
+                        <p className='mt-2'>Click to upload files</p>
+                        <p className="text-xs">PDF, DOC, PPT</p>
+                    </div>
+                </div>
+                <Input
+                  id="fileUpload"
+                  name="fileUpload"
+                  type="file"
+                  accept="application/pdf,.doc,.docx,.ppt,.pptx"
+                  ref={fileInputRef}
+                  onChange={handleFileChange}
+                  className="hidden"
+                  multiple
+                />
+                <div className="mt-2 space-y-2">
+                  {formData.supplementaryFiles?.map((file, index) => (
+                    <div key={index} className="flex items-center justify-between text-sm p-2 bg-muted/50 rounded-md">
+                      <div className="flex items-center gap-2 truncate">
+                        <Paperclip className="h-4 w-4" />
+                        <span className="truncate">{file.name}</span>
+                      </div>
+                      <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => removeSupplementaryFile(index)}>
+                        <XIcon className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
           </div>
         </div>
       </ScrollArea>

@@ -10,6 +10,7 @@ export type Book = {
   details: string;
   imageUrl: string;
   fileType?: string;
+  supplementaryFiles?: { name: string; url: string; type: string }[];
 };
 
 export type Order = {
