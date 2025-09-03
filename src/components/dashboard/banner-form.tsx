@@ -83,7 +83,7 @@ export function BannerForm({ bannerId, onSaveSuccess, onCancel }: BannerFormProp
   };
   
   const handleSelectChange = (value: string) => {
-    setFormData(prev => ({ ...prev, bookId: value }));
+    setFormData(prev => ({ ...prev, bookId: value === 'none' ? '' : value }));
   };
   
   const handleSwitchChange = (checked: boolean) => {
@@ -196,12 +196,12 @@ export function BannerForm({ bannerId, onSaveSuccess, onCancel }: BannerFormProp
                         </div>
                         <div className="sm:col-span-2">
                             <Label htmlFor="bookId">Link to Book (optional)</Label>
-                            <Select onValueChange={handleSelectChange} value={formData.bookId}>
+                            <Select onValueChange={handleSelectChange} value={formData.bookId || 'none'}>
                                 <SelectTrigger className="mt-1">
                                     <SelectValue placeholder="Select a book" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="">None</SelectItem>
+                                    <SelectItem value="none">None</SelectItem>
                                     {books.map(book => (
                                         <SelectItem key={book.id} value={book.id}>{book.title}</SelectItem>
                                     ))}
