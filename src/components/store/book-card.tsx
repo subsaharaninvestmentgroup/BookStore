@@ -21,27 +21,33 @@ export function BookCard({ book }: BookCardProps) {
     }, []);
 
     return (
-        <Link href={`/store/book/${book.id}`}>
-            <Card className="overflow-hidden h-full flex flex-col group transform transition-all duration-300 hover:scale-105 hover:shadow-xl">
-                <div className="relative aspect-[2/3] w-full">
+        <Link href={`/store/book/${book.id}`} className="group block">
+            <div className="relative bg-background rounded-lg overflow-hidden transition-all duration-300 hover:shadow-lg">
+                <div className="relative aspect-[2/3] w-full overflow-hidden">
+                    <div className="absolute inset-0 bg-black/5 group-hover:bg-black/0 transition-colors duration-300 z-10" />
                     <Image
                         src={book.imageUrl || 'https://picsum.photos/400/600'}
                         alt={`Cover of ${book.title}`}
                         fill
-                        className="object-cover"
+                        className="object-cover transform transition-transform duration-500 group-hover:scale-110"
                         data-ai-hint="book cover"
                     />
                 </div>
-                <CardContent className="p-4 flex flex-col flex-grow">
-                    <h3 className="font-semibold text-lg leading-tight truncate group-hover:text-primary transition-colors">
-                        {book.title}
-                    </h3>
-                    <p className="text-sm text-muted-foreground mt-1">{book.author}</p>
-                    <div className="mt-auto pt-4">
-                        <p className="font-bold text-lg">{currencySymbol}{book.price.toFixed(2)}</p>
+                <div className="p-4 space-y-2">
+                    <div className="space-y-1">
+                        <h3 className="font-medium text-base leading-tight line-clamp-2 group-hover:text-primary transition-colors">
+                            {book.title}
+                        </h3>
+                        <p className="text-sm text-muted-foreground">{book.author}</p>
                     </div>
-                </CardContent>
-            </Card>
+                    <div className="flex items-center justify-between">
+                        <p className="font-semibold text-lg tracking-tight">{currencySymbol}{book.price.toFixed(2)}</p>
+                        <div className="opacity-0 transform translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all">
+                            <div className="text-sm text-primary font-medium">View Details →</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </Link>
     );
 }

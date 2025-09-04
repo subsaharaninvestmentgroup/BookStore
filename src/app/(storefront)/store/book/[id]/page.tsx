@@ -19,6 +19,7 @@ import {
 import { getCurrencySymbol, getCachedData, setCachedData } from '@/lib/utils';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { BookReviews } from '@/components/store/book-reviews';
 
 
 export default function BookPage({ params }: { params: { id: string } }) {
@@ -122,11 +123,25 @@ export default function BookPage({ params }: { params: { id: string } }) {
                     <div className="flex items-center gap-4">
                         <div className="flex items-center gap-0.5">
                             {[...Array(5)].map((_, i) => (
-                                <Star key={i} className="w-5 h-5 fill-primary text-primary" />
+                                <Star 
+                                    key={i} 
+                                    className={`w-5 h-5 ${
+                                        i < Math.round(book.rating?.average || 0)
+                                            ? "fill-yellow-400 text-yellow-400"
+                                            : "fill-gray-200 text-gray-200"
+                                    }`}
+                                />
                             ))}
                         </div>
-                        <span className="text-sm text-muted-foreground">123 ratings</span>
-                        <a href="#" className="text-sm text-primary hover:underline">See all formats and editions</a>
+                        <span className="text-sm text-muted-foreground">
+                            {book.rating?.average.toFixed(1)} ({book.reviewCount} {book.reviewCount === 1 ? 'review' : 'reviews'})
+                        </span>
+                        <a href="#" onClick={(e) => {
+                            e.preventDefault();
+                            document.querySelector('[data-value="reviews"]')?.scrollIntoView({ behavior: 'smooth' });
+                        }} className="text-sm text-primary hover:underline">
+                            {book.reviewCount > 0 ? 'See all reviews' : 'Be the first to review'}
+                        </a>
                     </div>
                     
                     <Separator />
@@ -156,9 +171,21 @@ export default function BookPage({ params }: { params: { id: string } }) {
                             </AccordionContent>
                         </AccordionItem>
                          <AccordionItem value="reviews">
-                            <AccordionTrigger className="text-lg font-semibold">Reviews</AccordionTrigger>
+                            <AccordionTrigger className="text-lg font-semibold">
+                                Reviews {book.reviewCount > 0 && `(${book.reviewCount})`}
+                            </AccordionTrigger>
                             <AccordionContent>
-                            Coming soon.
+                                <BookReviews 
+                                    bookId={book.id} 
+                                    initialRating={book.rating}
+                                    onRatingUpdate={(rating) => {
+                                        setBook(prev => prev ? {
+                                            ...prev,
+                                            rating,
+                                            reviewCount: rating.total
+                                        } : null);
+                                    }}
+                                />
                             </AccordionContent>
                         </AccordionItem>
                     </Accordion>

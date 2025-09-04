@@ -7,6 +7,30 @@ export type SupplementaryFile = {
   type: string 
 };
 
+export type Review = {
+  id: string;
+  bookId: string;
+  email: string;
+  name?: string;
+  rating: number;
+  title: string;
+  comment: string;
+  createdAt: string;
+  helpful: number;
+};
+
+export type BookRating = {
+  average: number;
+  total: number;
+  distribution: {
+    1: number;
+    2: number;
+    3: number;
+    4: number;
+    5: number;
+  };
+};
+
 export type Book = {
   id: string;
   title: string;
@@ -20,6 +44,8 @@ export type Book = {
   imageUrl: string;
   supplementaryFiles: SupplementaryFile[];
   sampleText: string;
+  rating?: BookRating;
+  reviewCount: number;
 };
 
 export type Order = {

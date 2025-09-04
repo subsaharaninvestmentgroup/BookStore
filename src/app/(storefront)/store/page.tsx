@@ -56,48 +56,63 @@ export default function StorefrontPage() {
     }, []);
 
     return (
-        <div>
-            <section className="w-full">
+        <div className="min-h-screen bg-background">
+            <section className="relative w-full">
                 {loading || banners.length === 0 ? (
-                    <div className="w-full aspect-[2/1] bg-muted animate-pulse" />
+                    <div className="w-full aspect-[21/9] bg-muted animate-pulse" />
                 ) : (
                     <Carousel className="w-full" opts={{ loop: true }}>
                         <CarouselContent>
                             {banners.map(banner => (
                                 <CarouselItem key={banner.id}>
-                                    <div className="relative aspect-[2/1] w-full">
+                                    <div className="relative aspect-[21/9] w-full overflow-hidden">
                                         <Image
                                             src={banner.imageUrl}
                                             alt={banner.title}
                                             fill
-                                            className="object-cover"
+                                            className="object-cover transform hover:scale-105 transition-transform duration-700"
                                             data-ai-hint="banner image"
+                                            priority
                                         />
-                                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
-                                        <div className="absolute inset-0 flex flex-col items-center justify-end text-center p-8 text-white">
-                                            <h1 className="text-4xl md:text-6xl font-bold tracking-tight">{banner.title}</h1>
-                                            <p className="mt-4 max-w-2xl text-lg">{banner.description}</p>
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+                                        <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-8 text-white">
+                                            <h1 className="text-4xl md:text-7xl font-bold tracking-tighter max-w-4xl">
+                                                {banner.title}
+                                            </h1>
+                                            <p className="mt-6 max-w-2xl text-lg md:text-xl text-gray-200">
+                                                {banner.description}
+                                            </p>
                                             <Link href={banner.callToAction || '#'}>
-                                                <Button className="mt-6">Shop Now</Button>
+                                                <Button size="lg" className="mt-8 hover:scale-105 transition-transform">
+                                                    Shop Now
+                                                </Button>
                                             </Link>
                                         </div>
                                     </div>
                                 </CarouselItem>
                             ))}
                         </CarouselContent>
-                        <CarouselPrevious className="absolute left-4 top-1/2 -translate-y-1/2 text-white" />
-                        <CarouselNext className="absolute right-4 top-1/2 -translate-y-1/2 text-white" />
+                        <CarouselPrevious className="absolute left-8 top-1/2 -translate-y-1/2 bg-white/10 hover:bg-white/20 border-0 text-white transition-colors" />
+                        <CarouselNext className="absolute right-8 top-1/2 -translate-y-1/2 bg-white/10 hover:bg-white/20 border-0 text-white transition-colors" />
                     </Carousel>
                 )}
             </section>
             
-            <section className="py-12 md:py-24 lg:py-32">
+            <section className="py-16 md:py-24">
                 <div className="container px-4 md:px-6">
-                    <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl text-center">Featured Books</h2>
-                    <p className="mx-auto max-w-[700px] text-muted-foreground md:text-xl text-center mt-4">
-                        Discover our handpicked selection of must-read books.
-                    </p>
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mt-8">
+                    <div className="flex flex-col items-center space-y-4 text-center">
+                        <div className="space-y-2">
+                            <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">
+                                Featured Books
+                            </h2>
+                            <div className="w-24 h-1 mx-auto bg-primary/20 rounded-full" />
+                        </div>
+                        <p className="max-w-[700px] text-muted-foreground md:text-lg">
+                            Discover our handpicked selection of must-read books.
+                        </p>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 xl:gap-8 mt-12">
                         {loading ? (
                             [...Array(4)].map((_, i) => (
                                 <Card key={i}>
