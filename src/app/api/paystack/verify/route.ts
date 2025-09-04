@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { recordOrder, fulfillOrder } from '@/lib/fulfillment';
+import { recordOrder, fulfillOrder, createOrUpdateCustomerFromOrder } from '@/lib/fulfillment';
 
 export async function POST(req: Request) {
   try {
@@ -21,11 +21,15 @@ export async function POST(req: Request) {
     if (data.status && data.data && data.data.status === 'success') {
       // Build order
       const psMeta = data.data.metadata || {};
+      const customerName = psMeta?.name || metadata?.name || data.data.customer?.first_name || 'Customer';
+      const customerEmail = data.data.customer?.email || psMeta?.email || metadata?.email;
+      const amount = data.data.amount / 100;
+
       const order = {
-        customerName: psMeta?.name || metadata?.name || data.data.customer?.first_name || 'Customer',
-        customerEmail: data.data.customer?.email || psMeta?.email || metadata?.email,
+        customerName,
+        customerEmail,
         items: [{ bookId: psMeta?.bookId || metadata?.bookId, quantity: 1 }],
-        amount: data.data.amount / 100,
+        amount,
         paymentStatus: 'Paid',
         shippingStatus: 'Processing',
         paymentReference: reference,
@@ -34,6 +38,12 @@ export async function POST(req: Request) {
       };
       const saved = await recordOrder(order);
       await fulfillOrder({ ...order, id: saved.id });
+      await createOrUpdateCustomerFromOrder({
+        name: customerName,
+        email: customerEmail,
+        amount,
+        address: order.address
+      });
       return NextResponse.json({ success: true, orderId: saved.id });
     }
 

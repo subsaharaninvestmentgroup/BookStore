@@ -8,13 +8,37 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import type { Review, BookRating } from '@/lib/types';
 import { db } from '@/lib/firebase';
-import { collection, query, where, getDocs, addDoc, doc, updateDoc, orderBy, getDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, addDoc, doc, updateDoc, orderBy, getDoc, setDoc, runTransaction } from 'firebase/firestore';
 
 interface BookReviewsProps {
   bookId: string;
   initialRating?: BookRating;
   onRatingUpdate?: (rating: BookRating) => void;
 }
+
+const createOrUpdateCustomerFromReview = async (email: string, name: string) => {
+    if (!email) return;
+
+    const customerQuery = query(collection(db, 'customers'), where('email', '==', email));
+    const querySnapshot = await getDocs(customerQuery);
+    
+    if (querySnapshot.empty) {
+        // Customer does not exist, create a new one
+        const newCustomerRef = doc(collection(db, 'customers'));
+        await setDoc(newCustomerRef, {
+            id: newCustomerRef.id,
+            name: name || 'Anonymous Reviewer',
+            email: email,
+            joinDate: new Date().toISOString().split('T')[0],
+            totalOrders: 0,
+            totalSpent: 0,
+            address: '',
+            isAdmin: false,
+        });
+    }
+    // If customer exists, we don't need to do anything for a review
+};
+
 
 export function BookReviews({ bookId, initialRating, onRatingUpdate }: BookReviewsProps) {
   const [reviews, setReviews] = React.useState<Review[]>([]);
@@ -108,6 +132,9 @@ export function BookReviews({ bookId, initialRating, onRatingUpdate }: BookRevie
       };
 
       await addDoc(collection(db, 'reviews'), reviewData);
+
+      // Create/update customer record
+      await createOrUpdateCustomerFromReview(userReview.email, userReview.name);
 
       // Update book rating in Firestore
       const bookRef = doc(db, 'books', bookId);
