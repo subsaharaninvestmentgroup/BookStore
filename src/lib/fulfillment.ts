@@ -12,21 +12,107 @@ export async function recordOrder(order: any) {
   return { id: docRef.id };
 }
 
-export async function fulfillOrder(order: any) {
-  // For digital delivery: pretend to send email
-  if (order.digital && order.items && order.items.length) {
-    const digitalItem = order.items.find(item => !!item.digitalFileUrl);
-    if (digitalItem) {
-        // integrate with real email service here
-        console.log(`Sending digital delivery for item ${digitalItem.bookTitle} to ${order.customerEmail} for order ${order.id}.`);
-        console.log(`Download link: ${digitalItem.digitalFileUrl}`);
-        return { emailSent: true };
-    }
-  }
+import { generateSecureDownloadUrl, getDownloadExpiration } from './secure-downloads';
+import { sendDigitalDeliveryEmail, sendOrderConfirmationEmail } from './email';
 
-  // For physical goods: log shipping request
-  console.log(`Create shipping order for ${order.customerName}, address: ${order.address}, phone: ${order.customerPhone}`);
-  return { shipped: true };
+export async function fulfillOrder(order: any) {
+  try {
+    // Send order confirmation email first
+    await sendOrderConfirmationEmail({
+      to: order.customerEmail,
+      orderDetails: {
+        orderReference: order.paymentReference,
+        items: order.items.map((item: any) => ({
+          title: item.bookTitle,
+          format: order.digital ? 'digital' : 'physical',
+          price: order.amount
+        })),
+        total: order.amount,
+        shippingAddress: order.address,
+        estimatedDelivery: order.digital ? undefined : getEstimatedDeliveryDate()
+      }
+    });
+
+    // Handle digital delivery
+    if (order.digital && order.items && order.items.length) {
+      const digitalItem = order.items.find((item: any) => item.bookId);
+      if (digitalItem) {
+        const downloadUrl = await generateSecureDownloadUrl({
+          fileId: digitalItem.digitalFileUrl,
+          fileName: digitalItem.bookTitle,
+          bookId: digitalItem.bookId,
+          orderReference: order.paymentReference
+        });
+
+        // Send digital delivery email with secure download link
+        await sendDigitalDeliveryEmail({
+          to: order.customerEmail,
+          bookTitle: digitalItem.bookTitle,
+          downloadUrl,
+          expiresAt: getDownloadExpiration(),
+          orderReference: order.paymentReference
+        });
+
+        return { 
+          emailSent: true, 
+          downloadUrl,
+          digital: true
+        };
+      }
+    }
+
+    // Handle physical delivery
+    if (!order.digital) {
+      // Here you would integrate with your shipping provider
+      // For example, creating a shipping label with a service like ShipEngine
+      const shippingDetails = await createShippingOrder({
+        name: order.customerName,
+        address: order.address,
+        phone: order.customerPhone,
+        orderRef: order.paymentReference,
+        items: order.items
+      });
+
+      return { 
+        shipped: true,
+        shippingDetails,
+        physical: true
+      };
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error('Error fulfilling order:', error);
+    throw new Error('Failed to fulfill order');
+  }
+}
+
+function getEstimatedDeliveryDate() {
+  const date = new Date();
+  date.setDate(date.getDate() + 5); // Estimate 5 business days
+  return date.toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+}
+
+async function createShippingOrder(details: {
+  name: string;
+  address: string;
+  phone: string;
+  orderRef: string;
+  items: any[];
+}) {
+  // This is where you would integrate with your shipping provider
+  // For now, we'll just return mock data
+  return {
+    trackingNumber: `TRACK-${Math.random().toString(36).substring(7)}`,
+    estimatedDelivery: getEstimatedDeliveryDate(),
+    carrier: 'Standard Shipping',
+    status: 'Processing'
+  };
 }
 
 export async function createOrUpdateCustomerFromOrder(details: { name: string, email: string, amount: number, address: string, phone?: string }) {
