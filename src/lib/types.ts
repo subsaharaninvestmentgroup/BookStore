@@ -61,6 +61,7 @@ export type Order = {
   id: string;
   customerName: string;
   customerEmail: string;
+  customerPhone?: string;
   items: OrderItem[];
   amount: number;
   paymentStatus: 'Paid' | 'Pending' | 'Failed';
@@ -76,6 +77,7 @@ export type Customer = {
   id: string;
   name: string;
   email: string;
+  phone?: string;
   totalOrders: number;
   totalSpent: number;
   joinDate: string;

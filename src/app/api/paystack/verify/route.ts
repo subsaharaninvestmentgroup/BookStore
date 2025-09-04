@@ -47,10 +47,12 @@ export async function POST(req: Request) {
       const customerEmail = transactionData.customer?.email || finalMetadata?.email;
       const amount = transactionData.amount / 100;
       const address = finalMetadata?.address || '';
+      const phone = finalMetadata?.phone || '';
 
       const order: Omit<Order, 'id' | 'date'> = {
         customerName,
         customerEmail,
+        customerPhone: phone,
         items: [{ 
           bookId: bookId, 
           quantity: 1, 
@@ -72,7 +74,8 @@ export async function POST(req: Request) {
         name: customerName,
         email: customerEmail,
         amount,
-        address: order.address
+        address: order.address,
+        phone: order.customerPhone,
       });
       return NextResponse.json({ success: true, orderId: saved.id });
     }

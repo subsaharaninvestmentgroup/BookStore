@@ -25,11 +25,11 @@ export async function fulfillOrder(order: any) {
   }
 
   // For physical goods: log shipping request
-  console.log(`Create shipping order for ${order.customerName}, address: ${order.address}`);
+  console.log(`Create shipping order for ${order.customerName}, address: ${order.address}, phone: ${order.customerPhone}`);
   return { shipped: true };
 }
 
-export async function createOrUpdateCustomerFromOrder(details: { name: string, email: string, amount: number, address: string }) {
+export async function createOrUpdateCustomerFromOrder(details: { name: string, email: string, amount: number, address: string, phone?: string }) {
     if (!details.email) return;
 
     const customersRef = collection(db, 'customers');
@@ -45,6 +45,7 @@ export async function createOrUpdateCustomerFromOrder(details: { name: string, e
                 id: newCustomerRef.id,
                 name: details.name,
                 email: details.email,
+                phone: details.phone || '',
                 joinDate: new Date().toISOString().split('T')[0],
                 totalOrders: 1,
                 totalSpent: details.amount,
@@ -63,7 +64,8 @@ export async function createOrUpdateCustomerFromOrder(details: { name: string, e
             transaction.update(customerRef, {
                 totalOrders: newTotalOrders,
                 totalSpent: newTotalSpent,
-                address: details.address || currentData.address // Update address if provided
+                address: details.address || currentData.address, // Update address if provided
+                phone: details.phone || currentData.phone // Update phone if provided
             });
         }
     });

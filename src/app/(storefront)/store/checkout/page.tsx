@@ -23,6 +23,7 @@ export default function CheckoutPage() {
   const [name, setName] = React.useState('');
   const [email, setEmail] = React.useState('');
   const [address, setAddress] = React.useState('');
+  const [phone, setPhone] = React.useState('');
   const [currency, setCurrency] = React.useState('ZAR');
   const [purchaseFormat, setPurchaseFormat] = React.useState<PurchaseFormat>('physical');
   const [serverError, setServerError] = React.useState<string | null>(null);
@@ -55,7 +56,7 @@ export default function CheckoutPage() {
 
   const isFormValid = () => {
     if (!email) return false;
-    if (purchaseFormat === 'physical' && !address) return false;
+    if (purchaseFormat === 'physical' && (!address || !phone)) return false;
     return true;
   };
 
@@ -63,6 +64,7 @@ export default function CheckoutPage() {
     if (!book || !isFormValid()) {
       if (!email) setServerError('Email is required.');
       if (purchaseFormat === 'physical' && !address) setServerError('Shipping address is required for hard copy.');
+      if (purchaseFormat === 'physical' && !phone) setServerError('Contact number is required for hard copy.');
       return;
     }
     
@@ -76,6 +78,7 @@ export default function CheckoutPage() {
         name,
         bookId: book.id,
         address: purchaseFormat === 'physical' ? address : '',
+        phone: purchaseFormat === 'physical' ? phone : '',
         purchaseFormat,
       }
     };
@@ -96,6 +99,7 @@ export default function CheckoutPage() {
         localStorage.setItem('checkout_name', name);
         localStorage.setItem('checkout_bookId', book.id);
         localStorage.setItem('checkout_address', payload.metadata.address);
+        localStorage.setItem('checkout_phone', payload.metadata.phone);
         localStorage.setItem('checkout_purchaseFormat', payload.metadata.purchaseFormat);
         
         setServerError(null);
@@ -182,12 +186,18 @@ export default function CheckoutPage() {
               
               {purchaseFormat === 'physical' && (
                 <div className="pt-6 space-y-4">
-                    <h2 className="text-lg font-semibold">Shipping Address</h2>
+                    <h2 className="text-lg font-semibold">Shipping Information</h2>
                     <Input 
-                    placeholder="Enter your shipping address" 
-                    value={address} 
-                    onChange={(e) => setAddress((e.target as HTMLInputElement).value)}
-                    required
+                        placeholder="Enter your shipping address" 
+                        value={address} 
+                        onChange={(e) => setAddress((e.target as HTMLInputElement).value)}
+                        required
+                    />
+                    <Input 
+                        placeholder="Enter your contact number" 
+                        value={phone} 
+                        onChange={(e) => setPhone((e.target as HTMLInputElement).value)}
+                        required
                     />
                 </div>
               )}

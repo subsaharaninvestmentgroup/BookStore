@@ -101,6 +101,10 @@ const CustomerDetailSheet = ({ customer, open, onOpenChange, currencySymbol }: {
               <p className="text-muted-foreground">Join Date</p>
               <p className="font-medium">{customer.joinDate}</p>
             </div>
+             <div>
+              <p className="text-muted-foreground">Phone</p>
+              <p className="font-medium">{customer.phone || 'N/A'}</p>
+            </div>
             <div>
               <p className="text-muted-foreground">Total Orders</p>
               <p className="font-medium">{customer.totalOrders}</p>
