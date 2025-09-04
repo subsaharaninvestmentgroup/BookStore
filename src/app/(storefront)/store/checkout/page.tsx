@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from 'react';
@@ -8,6 +9,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { getCurrencySymbol } from '@/lib/utils';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
+
+type PurchaseFormat = 'digital' | 'physical';
 
 export default function CheckoutPage() {
   const params = useSearchParams();
@@ -19,6 +24,7 @@ export default function CheckoutPage() {
   const [email, setEmail] = React.useState('');
   const [address, setAddress] = React.useState('');
   const [currency, setCurrency] = React.useState('ZAR');
+  const [purchaseFormat, setPurchaseFormat] = React.useState<PurchaseFormat>('physical');
   const [serverError, setServerError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
@@ -28,7 +34,16 @@ export default function CheckoutPage() {
       try {
         const docRef = doc(db, 'books', bookId);
         const snap = await getDoc(docRef);
-        if (snap.exists()) setBook({ ...(snap.data() as any), id: snap.id });
+        if (snap.exists()) {
+          const bookData = { ...(snap.data() as any), id: snap.id };
+          setBook(bookData);
+          if (!bookData.digitalFile) {
+            setPurchaseFormat('physical');
+          } else {
+            // Default to physical if digital is available, user can switch
+            setPurchaseFormat('physical');
+          }
+        }
       } catch (err) {
         console.error(err);
       } finally {
@@ -38,10 +53,16 @@ export default function CheckoutPage() {
     fetchBook();
   }, [bookId]);
 
+  const isFormValid = () => {
+    if (!email) return false;
+    if (purchaseFormat === 'physical' && !address) return false;
+    return true;
+  };
+
   const startPaystack = async () => {
-    if (!book) return;
-    if (!email) {
-      setServerError('Email is required');
+    if (!book || !isFormValid()) {
+      if (!email) setServerError('Email is required.');
+      if (purchaseFormat === 'physical' && !address) setServerError('Shipping address is required for hard copy.');
       return;
     }
     
@@ -51,6 +72,12 @@ export default function CheckoutPage() {
       name,
       bookId: book.id,
       currency,
+      metadata: {
+        name,
+        bookId: book.id,
+        address: purchaseFormat === 'physical' ? address : '',
+        purchaseFormat,
+      }
     };
 
     try {
@@ -68,6 +95,8 @@ export default function CheckoutPage() {
         localStorage.setItem('checkout_email', email);
         localStorage.setItem('checkout_name', name);
         localStorage.setItem('checkout_bookId', book.id);
+        localStorage.setItem('checkout_address', payload.metadata.address);
+        localStorage.setItem('checkout_purchaseFormat', payload.metadata.purchaseFormat);
         
         setServerError(null);
         window.location.href = data.data.authorization_url;
@@ -106,6 +135,24 @@ export default function CheckoutPage() {
                 <p className="text-sm mt-1">{book.details}</p>
               </div>
             </div>
+            
+            {/* Format Selection */}
+            {book.digitalFile && (
+              <div className="space-y-4">
+                <h2 className="text-lg font-semibold">Choose Format</h2>
+                <RadioGroup value={purchaseFormat} onValueChange={(value) => setPurchaseFormat(value as PurchaseFormat)}>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="physical" id="physical" />
+                    <Label htmlFor="physical">Hard Copy</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="digital" id="digital" />
+                    <Label htmlFor="digital">Digital File (PDF/EPUB)</Label>
+                  </div>
+                </RadioGroup>
+              </div>
+            )}
+
 
             {/* Form Section */}
             <div className="space-y-6">
@@ -132,15 +179,19 @@ export default function CheckoutPage() {
                   </label>
                 </div>
               </div>
+              
+              {purchaseFormat === 'physical' && (
+                <div className="pt-6 space-y-4">
+                    <h2 className="text-lg font-semibold">Shipping Address</h2>
+                    <Input 
+                    placeholder="Enter your shipping address" 
+                    value={address} 
+                    onChange={(e) => setAddress((e.target as HTMLInputElement).value)}
+                    required
+                    />
+                </div>
+              )}
 
-              <div className="pt-6 space-y-4">
-                <h2 className="text-lg font-semibold">Shipping Address</h2>
-                <Input 
-                  placeholder="Enter your shipping address" 
-                  value={address} 
-                  onChange={(e) => setAddress((e.target as HTMLInputElement).value)}
-                />
-              </div>
 
               <div className="pt-6">
                 <h2 className="text-lg font-semibold mb-4">Payment Details</h2>
@@ -172,10 +223,10 @@ export default function CheckoutPage() {
 
               <Button 
                 onClick={startPaystack} 
-                disabled={!email} 
+                disabled={!isFormValid()} 
                 className="w-full h-12 text-base font-medium"
               >
-                {email ? `Pay ${getCurrencySymbol(currency)}${book.price.toFixed(2)}` : 'Enter email to continue'}
+                {isFormValid() ? `Pay ${getCurrencySymbol(currency)}${book.price.toFixed(2)}` : 'Complete required fields'}
               </Button>
             </div>
           </div>
@@ -193,7 +244,7 @@ export default function CheckoutPage() {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Shipping</span>
-                    <span>Free</span>
+                    <span>{purchaseFormat === 'physical' ? 'Free' : 'N/A'}</span>
                   </div>
                   <div className="pt-2 border-t flex justify-between font-medium">
                     <span>Total</span>

@@ -3,17 +3,17 @@ import { NextResponse } from 'next/server';
 import { recordOrder, fulfillOrder, createOrUpdateCustomerFromOrder } from '@/lib/fulfillment';
 import { db } from '@/lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
-import type { Book } from '@/lib/types';
+import type { Book, Order } from '@/lib/types';
 
 export async function POST(req: Request) {
   try {
-  const body = await req.json();
-  const reference = body?.reference;
-  const metadata = body?.metadata || {};
+    const body = await req.json();
+    const reference = body?.reference;
+    const clientMetadata = body?.metadata || {};
     const PAYSTACK_SECRET = process.env.PAYSTACK_SECRET_KEY;
     if (!PAYSTACK_SECRET) return NextResponse.json({ error: 'missing key' }, { status: 500 });
 
-  if (!reference) return NextResponse.json({ error: 'missing reference' }, { status: 400 });
+    if (!reference) return NextResponse.json({ error: 'missing reference' }, { status: 400 });
 
     const res = await fetch(`https://api.paystack.co/transaction/verify/${encodeURIComponent(reference)}`, {
       method: 'GET',
@@ -23,7 +23,13 @@ export async function POST(req: Request) {
 
     // Return full data when not successful so client can inspect
     if (data.status && data.data && data.data.status === 'success') {
-      const bookId = metadata?.bookId || data.data.metadata?.bookId;
+      const transactionData = data.data;
+      const paystackMetadata = transactionData.metadata || {};
+      
+      // Combine metadata from Paystack and client for robustness
+      const finalMetadata = { ...paystackMetadata, ...clientMetadata };
+
+      const bookId = finalMetadata?.bookId;
       let bookData: Book | null = null;
       if (bookId) {
         const bookRef = doc(db, 'books', bookId);
@@ -33,29 +39,33 @@ export async function POST(req: Request) {
         }
       }
 
+      const purchaseFormat = finalMetadata.purchaseFormat || 'physical';
+      const isDigital = purchaseFormat === 'digital' && !!bookData?.digitalFile;
 
       // Build order
-      const psMeta = data.data.metadata || {};
-      const customerName = psMeta?.name || metadata?.name || data.data.customer?.first_name || 'Customer';
-      const customerEmail = data.data.customer?.email || psMeta?.email || metadata?.email;
-      const amount = data.data.amount / 100;
+      const customerName = finalMetadata?.name || transactionData.customer?.first_name || 'Customer';
+      const customerEmail = transactionData.customer?.email || finalMetadata?.email;
+      const amount = transactionData.amount / 100;
+      const address = finalMetadata?.address || '';
 
-      const order = {
+      const order: Omit<Order, 'id' | 'date'> = {
         customerName,
         customerEmail,
         items: [{ 
           bookId: bookId, 
           quantity: 1, 
           bookTitle: bookData?.title,
-          digitalFileUrl: bookData?.digitalFile?.url,
+          digitalFileUrl: isDigital ? bookData?.digitalFile?.url : undefined,
         }],
         amount,
         paymentStatus: 'Paid',
-        shippingStatus: 'Processing',
+        shippingStatus: isDigital ? 'Delivered' : 'Processing', // Digital orders are instantly "Delivered"
         paymentReference: reference,
-        digital: !!bookData?.digitalFile,
-        address: psMeta?.address || metadata?.address || '',
+        digital: isDigital,
+        address,
+        purchaseFormat
       };
+      
       const saved = await recordOrder(order);
       await fulfillOrder({ ...order, id: saved.id });
       await createOrUpdateCustomerFromOrder({

@@ -1,3 +1,4 @@
+
 import { NextResponse } from 'next/server';
 
 export async function POST(req: Request) {
@@ -17,7 +18,7 @@ export async function POST(req: Request) {
     const payload = {
       email: body.email,
       amount: body.amount,
-      metadata: { name: body.name, bookId: body.bookId },
+      metadata: body.metadata, // Pass the whole metadata object
       callback_url: `${process.env.NEXT_PUBLIC_BASE_URL || ''}/store/checkout/complete`,
     };
 

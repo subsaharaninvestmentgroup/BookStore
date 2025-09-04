@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from 'react';
@@ -28,6 +29,8 @@ export default function CheckoutComplete() {
               email: localStorage.getItem('checkout_email'),
               name: localStorage.getItem('checkout_name'),
               bookId: localStorage.getItem('checkout_bookId'),
+              address: localStorage.getItem('checkout_address'),
+              purchaseFormat: localStorage.getItem('checkout_purchaseFormat'),
             }
           }),
         });

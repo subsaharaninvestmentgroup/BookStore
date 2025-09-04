@@ -55,6 +55,8 @@ export type OrderItem = {
     digitalFileUrl?: string;
 }
 
+export type PurchaseFormat = 'digital' | 'physical';
+
 export type Order = {
   id: string;
   customerName: string;
@@ -67,6 +69,7 @@ export type Order = {
   address: string;
   paymentReference: string;
   digital?: boolean;
+  purchaseFormat?: PurchaseFormat;
 };
 
 export type Customer = {
