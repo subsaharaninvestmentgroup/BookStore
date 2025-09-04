@@ -23,12 +23,7 @@ export default function StorefrontLayout({
           <Link href="/store/all-books" className="text-foreground transition-colors hover:text-foreground">
             All Books
           </Link>
-          <Link href="#" className="text-muted-foreground transition-colors hover:text-foreground">
-            Fiction
-          </Link>
-          <Link href="#" className="text-muted-foreground transition-colors hover:text-foreground">
-            Non-Fiction
-          </Link>
+     
         </nav>
         <Sheet>
           <SheetTrigger asChild>

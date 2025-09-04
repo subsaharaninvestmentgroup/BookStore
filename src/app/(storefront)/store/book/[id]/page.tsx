@@ -9,7 +9,7 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Star, Truck, Upload } from 'lucide-react';
-import { notFound } from 'next/navigation';
+import { notFound, useRouter } from 'next/navigation';
 import {
   Accordion,
   AccordionContent,
@@ -25,6 +25,7 @@ export default function BookPage({ params }: { params: { id: string } }) {
     const [book, setBook] = React.useState<Book | null>(null);
     const [loading, setLoading] = React.useState(true);
     const [currencySymbol, setCurrencySymbol] = React.useState('$');
+    const router = useRouter();
 
      React.useEffect(() => {
         const savedCurrency = localStorage.getItem('bookstore-currency') || 'ZAR';
@@ -170,7 +171,7 @@ export default function BookPage({ params }: { params: { id: string } }) {
                             <div className="text-3xl font-bold">{currencySymbol}{book.price.toFixed(2)}</div>
                             <Separator />
                             <div className="flex flex-col gap-2">
-                                <Button size="lg" className="w-full">Add to Cart</Button>
+                                <Button size="lg" className="w-full" onClick={() => router.push(`/store/checkout?bookId=${book?.id}`)}>Add to Cart</Button>
                                 <Button size="lg" variant="secondary" className="w-full">Buy Now</Button>
                             </div>
                             <div className="flex items-center gap-2 text-sm text-muted-foreground pt-2">
