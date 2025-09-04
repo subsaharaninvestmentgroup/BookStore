@@ -8,7 +8,7 @@ import { doc, getDoc } from 'firebase/firestore';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Star, Truck } from 'lucide-react';
+import { Star, Truck, Upload } from 'lucide-react';
 import { notFound } from 'next/navigation';
 import {
   Accordion,
@@ -32,11 +32,12 @@ export default function BookPage({ params }: { params: { id: string } }) {
     }, []);
 
     React.useEffect(() => {
-        if (!params.id) return;
+        const bookId = params.id;
+        if (!bookId) return;
 
         const fetchBook = async () => {
             setLoading(true);
-            const cacheKey = `book_${params.id}`;
+            const cacheKey = `book_${bookId}`;
             const cachedBook = getCachedData(cacheKey);
 
             if(cachedBook) {
@@ -46,7 +47,7 @@ export default function BookPage({ params }: { params: { id: string } }) {
             }
 
             try {
-                const docRef = doc(db, 'books', params.id);
+                const docRef = doc(db, 'books', bookId);
                 const docSnap = await getDoc(docRef);
 
                 if (docSnap.exists()) {
@@ -70,14 +71,16 @@ export default function BookPage({ params }: { params: { id: string } }) {
     if (loading) {
         return (
             <div className="container mx-auto px-4 md:px-6 py-12">
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-12">
-                    <div className="aspect-[2/3] w-full max-w-md mx-auto bg-muted rounded-lg animate-pulse"></div>
-                    <div className="space-y-6 lg:col-span-2">
+                <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-12">
+                    <div className="lg:col-span-1 aspect-[2/3] w-full max-w-sm mx-auto bg-muted rounded-lg animate-pulse"></div>
+                    <div className="space-y-6 lg:col-span-3">
                         <div className="h-10 bg-muted rounded w-3/4 animate-pulse"></div>
                         <div className="h-6 bg-muted rounded w-1/4 animate-pulse"></div>
-                        <div className="h-10 bg-muted rounded w-1/3 animate-pulse"></div>
                         <div className="h-24 bg-muted rounded w-full animate-pulse"></div>
                         <div className="h-12 bg-muted rounded w-1/2 animate-pulse"></div>
+                    </div>
+                     <div className="space-y-6 lg:col-span-1">
+                        <div className="h-48 bg-muted rounded w-full animate-pulse"></div>
                     </div>
                 </div>
             </div>
@@ -90,25 +93,29 @@ export default function BookPage({ params }: { params: { id: string } }) {
 
     return (
         <div className="container mx-auto px-4 md:px-6 py-12">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 lg:gap-12">
                 {/* Image Column */}
-                <div className="lg:col-span-1 flex justify-center">
+                <div className="lg:col-span-1 flex flex-col items-center">
                     <Image
                         src={book.imageUrl || "https://picsum.photos/600/900"}
                         alt={`Cover of ${book.title}`}
                         width={600}
                         height={900}
-                        className="aspect-[2/3] object-cover border w-full rounded-lg overflow-hidden max-w-md"
+                        className="aspect-[2/3] object-cover border w-full rounded-lg overflow-hidden max-w-xs shadow-lg"
                         data-ai-hint="book cover"
                     />
                 </div>
 
                 {/* Details Column */}
-                <div className="lg:col-span-1 space-y-6">
-                    <div>
-                        <Badge variant="outline">{book.category}</Badge>
-                        <h1 className="text-3xl lg:text-4xl font-bold mt-2">{book.title}</h1>
-                        <p className="text-lg text-muted-foreground mt-1">by {book.author}</p>
+                <div className="lg:col-span-3 space-y-6">
+                    <div className="flex justify-between items-start">
+                        <div>
+                            <h1 className="text-3xl lg:text-4xl font-bold">{book.title}</h1>
+                            <p className="text-lg text-muted-foreground mt-1">by <a href="#" className="text-primary hover:underline">{book.author}</a> | Format: {book.details}</p>
+                        </div>
+                        <Button variant="ghost" size="icon">
+                            <Upload className="h-5 w-5" />
+                        </Button>
                     </div>
 
                     <div className="flex items-center gap-4">
@@ -117,14 +124,23 @@ export default function BookPage({ params }: { params: { id: string } }) {
                                 <Star key={i} className="w-5 h-5 fill-primary text-primary" />
                             ))}
                         </div>
-                        <span className="text-sm text-muted-foreground">(123 reviews)</span>
+                        <span className="text-sm text-muted-foreground">123 ratings</span>
+                        <a href="#" className="text-sm text-primary hover:underline">See all formats and editions</a>
                     </div>
-
-                    <p className="text-muted-foreground leading-relaxed">{book.description}</p>
                     
-                    <Accordion type="single" collapsible className="w-full">
+                    <Separator />
+
+                    <article className="prose prose-stone dark:prose-invert max-w-none text-muted-foreground">
+                        <p className="lead">{book.description}</p>
+                        <h3>Praise for {book.title}</h3>
+                        <blockquote>
+                            "A wonderful tribute to a true American hero."
+                        </blockquote>
+                    </article>
+
+                    <Accordion type="single" collapsible className="w-full" defaultValue="details">
                         <AccordionItem value="details">
-                            <AccordionTrigger>Book Details</AccordionTrigger>
+                            <AccordionTrigger className="text-lg font-semibold">Book Details</AccordionTrigger>
                             <AccordionContent>
                                 <ul className="list-disc pl-5 space-y-2 text-muted-foreground">
                                     <li>Published Date: {book.publicationDate}</li>
@@ -133,13 +149,13 @@ export default function BookPage({ params }: { params: { id: string } }) {
                             </AccordionContent>
                         </AccordionItem>
                         <AccordionItem value="sample">
-                            <AccordionTrigger>Sample Text</AccordionTrigger>
-                            <AccordionContent className="whitespace-pre-wrap font-serif">
+                            <AccordionTrigger className="text-lg font-semibold">Sample Text</AccordionTrigger>
+                            <AccordionContent className="whitespace-pre-wrap font-serif text-base">
                             {book.sampleText || "No sample text available."}
                             </AccordionContent>
                         </AccordionItem>
                          <AccordionItem value="reviews">
-                            <AccordionTrigger>Reviews</AccordionTrigger>
+                            <AccordionTrigger className="text-lg font-semibold">Reviews</AccordionTrigger>
                             <AccordionContent>
                             Coming soon.
                             </AccordionContent>
@@ -150,12 +166,12 @@ export default function BookPage({ params }: { params: { id: string } }) {
                 {/* Actions Column */}
                 <div className="lg:col-span-1">
                     <Card className="sticky top-24 shadow-lg">
-                        <CardContent className="p-6 grid gap-4">
-                            <div className="text-4xl font-bold">{currencySymbol}{book.price.toFixed(2)}</div>
+                        <CardContent className="p-4 grid gap-4">
+                            <div className="text-3xl font-bold">{currencySymbol}{book.price.toFixed(2)}</div>
                             <Separator />
                             <div className="flex flex-col gap-2">
                                 <Button size="lg" className="w-full">Add to Cart</Button>
-                                <Button size="lg" variant="outline" className="w-full">Buy Now</Button>
+                                <Button size="lg" variant="secondary" className="w-full">Buy Now</Button>
                             </div>
                             <div className="flex items-center gap-2 text-sm text-muted-foreground pt-2">
                                 <Truck className="h-4 w-4" />
