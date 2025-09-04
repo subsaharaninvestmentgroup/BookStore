@@ -45,7 +45,6 @@ export function BookReviews({ bookId, initialRating, onRatingUpdate }: BookRevie
   const [loading, setLoading] = React.useState(true);
   const [userReview, setUserReview] = React.useState({
     rating: 0,
-    title: '',
     comment: '',
     email: '',
     name: ''
@@ -125,7 +124,6 @@ export function BookReviews({ bookId, initialRating, onRatingUpdate }: BookRevie
         email: userReview.email,
         name: userReview.name || 'Anonymous',
         rating: userReview.rating,
-        title: userReview.title,
         comment: userReview.comment,
         createdAt: new Date().toISOString(),
         helpful: 0,
@@ -174,7 +172,7 @@ export function BookReviews({ bookId, initialRating, onRatingUpdate }: BookRevie
       }
 
       // Reset form and refresh reviews
-      setUserReview({ rating: 0, title: '', comment: '', email: '', name: '' });
+      setUserReview({ rating: 0, comment: '', email: '', name: '' });
       fetchReviews();
 
       toast({
@@ -301,17 +299,6 @@ export function BookReviews({ bookId, initialRating, onRatingUpdate }: BookRevie
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium">Review Title*</label>
-            <Input
-              required
-              value={userReview.title}
-              onChange={(e) => setUserReview((prev) => ({ ...prev, title: e.target.value }))}
-              placeholder="Summarize your thoughts"
-              maxLength={100}
-            />
-          </div>
-
-          <div className="space-y-2">
             <label className="text-sm font-medium">Your Review*</label>
             <Textarea
               required
@@ -354,7 +341,6 @@ export function BookReviews({ bookId, initialRating, onRatingUpdate }: BookRevie
                   <div>
                     <div className="flex items-center gap-2">
                       <StarRating value={review.rating} />
-                      <span className="text-sm font-medium">{review.title}</span>
                     </div>
                     <div className="text-sm text-muted-foreground mt-1">
                       By {review.name} on {new Date(review.createdAt).toLocaleDateString()}

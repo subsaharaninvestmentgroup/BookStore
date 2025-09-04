@@ -1,4 +1,3 @@
-
 import { z } from 'zod';
 
 export type SupplementaryFile = { 
@@ -13,7 +12,6 @@ export type Review = {
   email: string;
   name?: string;
   rating: number;
-  title: string;
   comment: string;
   createdAt: string;
   helpful: number;
