@@ -48,15 +48,23 @@ export type Book = {
   reviewCount: number;
 };
 
+export type OrderItem = {
+    bookId: string;
+    bookTitle?: string;
+    quantity: number;
+}
+
 export type Order = {
   id: string;
   customerName: string;
   customerEmail: string;
-  items: { bookTitle: string; quantity: number }[];
+  items: OrderItem[];
   amount: number;
   paymentStatus: 'Paid' | 'Pending' | 'Failed';
   shippingStatus: 'Shipped' | 'Processing' | 'Delivered' | 'Cancelled';
   date: string;
+  address: string;
+  paymentReference: string;
 };
 
 export type Customer = {
