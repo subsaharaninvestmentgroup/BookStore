@@ -1,3 +1,4 @@
+
 import { db } from './firebase';
 import { collection, addDoc, serverTimestamp, query, where, getDocs, doc, runTransaction } from 'firebase/firestore';
 
@@ -13,10 +14,14 @@ export async function recordOrder(order: any) {
 
 export async function fulfillOrder(order: any) {
   // For digital delivery: pretend to send email
-  if (order.items && order.items.length && order.digital) {
-    // integrate with real email service here
-    console.log(`Sending digital delivery to ${order.customerEmail} for order ${order.id}`);
-    return { emailSent: true };
+  if (order.digital && order.items && order.items.length) {
+    const digitalItem = order.items.find(item => !!item.digitalFileUrl);
+    if (digitalItem) {
+        // integrate with real email service here
+        console.log(`Sending digital delivery for item ${digitalItem.bookTitle} to ${order.customerEmail} for order ${order.id}.`);
+        console.log(`Download link: ${digitalItem.digitalFileUrl}`);
+        return { emailSent: true };
+    }
   }
 
   // For physical goods: log shipping request

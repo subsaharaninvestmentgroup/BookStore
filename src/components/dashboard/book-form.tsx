@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '../ui/textarea';
-import { BookImage, Paperclip, Upload, X as XIcon, ChevronLeft } from 'lucide-react';
+import { BookImage, Paperclip, Upload, X as XIcon, ChevronLeft, FileText } from 'lucide-react';
 import Image from 'next/image';
 import { db, storage } from '@/lib/firebase';
 import { collection, addDoc, updateDoc, doc, getDoc } from 'firebase/firestore';
@@ -45,10 +45,13 @@ export function BookForm({ bookId, onSaveSuccess, onCancel }: BookFormProps) {
     imageUrl: '',
     supplementaryFiles: [],
     sampleText: '',
+    digitalFile: undefined,
   });
   const [imageFile, setImageFile] = React.useState<File | null>(null);
+  const [digitalBookFile, setDigitalBookFile] = React.useState<UploadableFile | null>(null);
   const [newSupplementaryFiles, setNewSupplementaryFiles] = React.useState<UploadableFile[]>([]);
   const imageInputRef = React.useRef<HTMLInputElement>(null);
+  const digitalFileInputRef = React.useRef<HTMLInputElement>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const [isSaving, setIsSaving] = React.useState(false);
@@ -94,6 +97,23 @@ export function BookForm({ bookId, onSaveSuccess, onCancel }: BookFormProps) {
       reader.readAsDataURL(file);
     }
   };
+
+  const handleDigitalFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if(file) {
+        setDigitalBookFile({
+            file,
+            name: file.name,
+            url: URL.createObjectURL(file),
+            type: file.type
+        })
+    }
+  }
+  
+  const removeDigitalFile = () => {
+    setDigitalBookFile(null);
+    setFormData(prev => ({...prev, digitalFile: undefined}));
+  }
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -141,6 +161,21 @@ export function BookForm({ bookId, onSaveSuccess, onCancel }: BookFormProps) {
         const imagePath = `books/${uuidv4()}-${imageFile.name}`;
         imageUrl = await uploadFile(imageFile, imagePath);
       }
+      
+      let digitalFileUrl: SupplementaryFile | undefined = formData.digitalFile;
+      if(digitalBookFile) {
+          if(bookId && formData.digitalFile?.url) {
+              try {
+                  await deleteObject(ref(storage, formData.digitalFile.url))
+              } catch (e) {
+                  console.warn("Old digital file not found, could not delete.", e);
+              }
+          }
+          const filePath = `digital_books/${uuidv4()}-${digitalBookFile.name}`;
+          const url = await uploadFile(digitalBookFile.file, filePath);
+          digitalFileUrl = { name: digitalBookFile.name, url, type: digitalBookFile.type };
+      }
+
 
       const uploadedFiles: SupplementaryFile[] = [];
       for (const upFile of newSupplementaryFiles) {
@@ -150,12 +185,12 @@ export function BookForm({ bookId, onSaveSuccess, onCancel }: BookFormProps) {
       }
 
       const finalSupplementaryFiles = [...(formData.supplementaryFiles || []), ...uploadedFiles];
-      const bookData = { ...formData, imageUrl, supplementaryFiles: finalSupplementaryFiles };
+      const bookData = { ...formData, imageUrl, digitalFile: digitalFileUrl, supplementaryFiles: finalSupplementaryFiles };
       delete bookData.id;
 
       if (bookId) {
         const bookRef = doc(db, 'books', bookId);
-        await updateDoc(bookRef, bookData);
+        await updateDoc(bookRef, bookData as Book);
         toast({ title: 'Success', description: 'Book updated successfully.' });
       } else {
         await addDoc(collection(db, 'books'), bookData);
@@ -276,6 +311,52 @@ export function BookForm({ bookId, onSaveSuccess, onCancel }: BookFormProps) {
                             />
                         </div>
                         <div>
+                            <Label>Digital Book File</Label>
+                             <div className="mt-2 space-y-2">
+                               {digitalBookFile ? (
+                                     <div className="flex items-center justify-between text-sm p-2 bg-muted/50 rounded-md">
+                                        <div className="flex items-center gap-2 truncate">
+                                            <FileText className="h-4 w-4" />
+                                            <span className="truncate">{digitalBookFile.name}</span>
+                                        </div>
+                                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={removeDigitalFile}>
+                                            <XIcon className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                               ) : formData.digitalFile ? (
+                                    <div className="flex items-center justify-between text-sm p-2 bg-muted/50 rounded-md">
+                                        <div className="flex items-center gap-2 truncate">
+                                            <FileText className="h-4 w-4" />
+                                            <a href={formData.digitalFile.url} target="_blank" rel="noopener noreferrer" className="truncate hover:underline">{formData.digitalFile.name}</a>
+                                        </div>
+                                         <Button variant="ghost" size="icon" className="h-6 w-6" onClick={removeDigitalFile}>
+                                            <XIcon className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                               ) : (
+                                <div
+                                    className="p-4 w-full bg-muted rounded-lg flex items-center justify-center overflow-hidden cursor-pointer border-2 border-dashed"
+                                    onClick={() => digitalFileInputRef.current?.click()}
+                                >
+                                    <div className="text-center text-sm text-muted-foreground">
+                                        <Upload className="mx-auto h-8 w-8 text-gray-400" />
+                                        <p className="mt-2">Upload digital book</p>
+                                    </div>
+                                </div>
+                               )}
+                             </div>
+                            <Input
+                                id="digitalFileUpload"
+                                name="digitalFileUpload"
+                                type="file"
+                                accept="application/pdf,.epub"
+                                ref={digitalFileInputRef}
+                                onChange={handleDigitalFileChange}
+                                className="hidden"
+                            />
+                        </div>
+
+                        <div>
                             <Label>Supplementary Files</Label>
                             <div
                                 className="mt-1 p-4 w-full bg-muted rounded-lg flex items-center justify-center overflow-hidden cursor-pointer border-2 border-dashed"
@@ -385,4 +466,3 @@ export function BookForm({ bookId, onSaveSuccess, onCancel }: BookFormProps) {
     </div>
   );
 }
-

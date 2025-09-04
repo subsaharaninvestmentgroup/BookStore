@@ -1,5 +1,9 @@
+
 import { NextResponse } from 'next/server';
 import { recordOrder, fulfillOrder, createOrUpdateCustomerFromOrder } from '@/lib/fulfillment';
+import { db } from '@/lib/firebase';
+import { doc, getDoc } from 'firebase/firestore';
+import type { Book } from '@/lib/types';
 
 export async function POST(req: Request) {
   try {
@@ -19,6 +23,17 @@ export async function POST(req: Request) {
 
     // Return full data when not successful so client can inspect
     if (data.status && data.data && data.data.status === 'success') {
+      const bookId = metadata?.bookId || data.data.metadata?.bookId;
+      let bookData: Book | null = null;
+      if (bookId) {
+        const bookRef = doc(db, 'books', bookId);
+        const bookSnap = await getDoc(bookRef);
+        if(bookSnap.exists()) {
+          bookData = bookSnap.data() as Book;
+        }
+      }
+
+
       // Build order
       const psMeta = data.data.metadata || {};
       const customerName = psMeta?.name || metadata?.name || data.data.customer?.first_name || 'Customer';
@@ -28,12 +43,17 @@ export async function POST(req: Request) {
       const order = {
         customerName,
         customerEmail,
-        items: [{ bookId: psMeta?.bookId || metadata?.bookId, quantity: 1 }],
+        items: [{ 
+          bookId: bookId, 
+          quantity: 1, 
+          bookTitle: bookData?.title,
+          digitalFileUrl: bookData?.digitalFile?.url,
+        }],
         amount,
         paymentStatus: 'Paid',
         shippingStatus: 'Processing',
         paymentReference: reference,
-        digital: true,
+        digital: !!bookData?.digitalFile,
         address: psMeta?.address || metadata?.address || '',
       };
       const saved = await recordOrder(order);

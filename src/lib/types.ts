@@ -1,3 +1,4 @@
+
 import { z } from 'zod';
 
 export type SupplementaryFile = { 
@@ -42,6 +43,7 @@ export type Book = {
   imageUrl: string;
   supplementaryFiles: SupplementaryFile[];
   sampleText: string;
+  digitalFile?: SupplementaryFile;
   rating?: BookRating;
   reviewCount: number;
 };
@@ -50,6 +52,7 @@ export type OrderItem = {
     bookId: string;
     bookTitle?: string;
     quantity: number;
+    digitalFileUrl?: string;
 }
 
 export type Order = {
@@ -63,6 +66,7 @@ export type Order = {
   date: string;
   address: string;
   paymentReference: string;
+  digital?: boolean;
 };
 
 export type Customer = {
