@@ -43,6 +43,11 @@ import { useToast } from '@/hooks/use-toast';
 import { getCurrencySymbol, getCachedData, setCachedData, clearCache } from '@/lib/utils';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '../ui/sheet';
 import { Separator } from '../ui/separator';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '../ui/dialog';
+import { Input } from '../ui/input';
+import { Label } from '../ui/label';
+import { sendShippingEmailAction } from '@/app/actions';
+
 
 type ShippingStatus = Order['shippingStatus'];
 const shippingStatuses: ShippingStatus[] = ['Processing', 'Shipped', 'Delivered', 'Cancelled'];
@@ -122,10 +127,18 @@ const OrderDetailSheet = ({ order, open, onOpenChange, currencySymbol }: { order
                                 <span className="text-muted-foreground">Shipping Status</span>
                                 <Badge variant={getBadgeVariant(order.shippingStatus)} className="capitalize">{order.shippingStatus}</Badge>
                             </div>
-                             <div className="flex justify-between">
+                             <div className="flex justify-between items-center">
                                 <span className="text-muted-foreground">Payment Reference</span>
                                 <span className="font-mono text-xs">{order.paymentReference}</span>
                             </div>
+                            {order.trackingUrl && (
+                                <div className="flex justify-between items-center">
+                                    <span className="text-muted-foreground">Tracking URL</span>
+                                    <a href={order.trackingUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline text-sm truncate max-w-[200px]">
+                                        {order.trackingUrl}
+                                    </a>
+                                </div>
+                            )}
                         </CardContent>
                     </Card>
 
@@ -160,6 +173,9 @@ export default function Orders() {
   const [currencySymbol, setCurrencySymbol] = React.useState('$');
   const [selectedOrder, setSelectedOrder] = React.useState<Order | null>(null);
   const [isSheetOpen, setIsSheetOpen] = React.useState(false);
+  const [isTrackingDialogOpen, setIsTrackingDialogOpen] = React.useState(false);
+  const [trackingUrl, setTrackingUrl] = React.useState('');
+  const [orderToUpdate, setOrderToUpdate] = React.useState<Order | null>(null);
 
   React.useEffect(() => {
     const savedCurrency = localStorage.getItem('bookstore-currency') || 'USD';
@@ -196,17 +212,39 @@ export default function Orders() {
     fetchOrders();
   }, [fetchOrders]);
 
-  const handleShippingStatusChange = async (orderId: string, status: ShippingStatus) => {
+  const handleShippingStatusChange = async (orderId: string, status: ShippingStatus, trackingUrl?: string) => {
     const orderRef = doc(db, 'orders', orderId);
+    const orderData = orders.find(o => o.id === orderId);
+    if(!orderData) return;
+
     try {
-        await updateDoc(orderRef, { shippingStatus: status });
-        const updatedOrders = orders.map(o => o.id === orderId ? { ...o, shippingStatus: status } : o);
+        const updateData: { shippingStatus: ShippingStatus; trackingUrl?: string } = { shippingStatus: status };
+        if (trackingUrl) {
+            updateData.trackingUrl = trackingUrl;
+        }
+
+        await updateDoc(orderRef, updateData);
+        
+        const updatedOrders = orders.map(o => o.id === orderId ? { ...o, ...updateData } : o);
         setOrders(updatedOrders);
         clearCache('orders_asc');
         clearCache('orders_desc');
         setCachedData(`orders_${sortDirection}`, updatedOrders); // Update cache
         clearCache('dashboardOverview'); // Invalidate overview cache
         toast({ title: 'Success', description: 'Order status updated.'});
+
+        if (status === 'Shipped' && trackingUrl) {
+            const result = await sendShippingEmailAction({
+                to: orderData.customerEmail,
+                trackingUrl,
+                orderReference: orderData.paymentReference
+            });
+            if(result.success) {
+                toast({ title: 'Email Sent', description: 'Shipping confirmation sent to customer.' });
+            } else {
+                toast({ variant: 'destructive', title: 'Email Failed', description: result.error});
+            }
+        }
     } catch (error: any) {
         toast({
             variant: 'destructive',
@@ -215,6 +253,25 @@ export default function Orders() {
         });
     }
   };
+
+  const onStatusChange = (order: Order, newStatus: ShippingStatus) => {
+      if (newStatus === 'Shipped' && order.purchaseFormat === 'physical') {
+          setOrderToUpdate(order);
+          setIsTrackingDialogOpen(true);
+      } else {
+          handleShippingStatusChange(order.id, newStatus);
+      }
+  };
+  
+  const handleTrackingSubmit = () => {
+    if (orderToUpdate && trackingUrl) {
+        handleShippingStatusChange(orderToUpdate.id, 'Shipped', trackingUrl);
+    }
+    setIsTrackingDialogOpen(false);
+    setTrackingUrl('');
+    setOrderToUpdate(null);
+  };
+
 
   const handleViewDetails = (order: Order) => {
     setSelectedOrder(order);
@@ -283,7 +340,7 @@ export default function Orders() {
                           <DropdownMenuLabel>Update Status</DropdownMenuLabel>
                           <DropdownMenuRadioGroup 
                             value={order.shippingStatus} 
-                            onValueChange={(value) => handleShippingStatusChange(order.id, value as ShippingStatus)}
+                            onValueChange={(value) => onStatusChange(order, value as ShippingStatus)}
                           >
                           {shippingStatuses.map(status => (
                               <DropdownMenuRadioItem key={status} value={status}>{status}</DropdownMenuRadioItem>
@@ -362,8 +419,34 @@ export default function Orders() {
             <TabsContent value="cancelled">{renderTable(filteredOrders)}</TabsContent>
         </Tabs>
         <OrderDetailSheet order={selectedOrder} open={isSheetOpen} onOpenChange={setIsSheetOpen} currencySymbol={currencySymbol} />
+        <Dialog open={isTrackingDialogOpen} onOpenChange={setIsTrackingDialogOpen}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Add Tracking Information</DialogTitle>
+                    <DialogDescription>
+                        Enter the tracking URL for order #{orderToUpdate?.id.substring(0, 7)}.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                    <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="trackingUrl" className="text-right">
+                            Tracking URL
+                        </Label>
+                        <Input
+                            id="trackingUrl"
+                            value={trackingUrl}
+                            onChange={(e) => setTrackingUrl(e.target.value)}
+                            className="col-span-3"
+                            placeholder="https://carrier.com/track/..."
+                        />
+                    </div>
+                </div>
+                <DialogFooter>
+                    <Button variant="outline" onClick={() => setIsTrackingDialogOpen(false)}>Cancel</Button>
+                    <Button onClick={handleTrackingSubmit} disabled={!trackingUrl}>Save & Notify Customer</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     </>
   );
 }
-
-    

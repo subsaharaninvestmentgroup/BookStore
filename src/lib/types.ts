@@ -71,6 +71,7 @@ export type Order = {
   paymentReference: string;
   digital?: boolean;
   purchaseFormat?: PurchaseFormat;
+  trackingUrl?: string;
 };
 
 export type Customer = {
@@ -108,6 +109,7 @@ export const GenerateBannerOutputSchema = z.object({
     .describe('A catchy and concise title for the promotional banner.'),
   description: z
     .string()
+
     .describe(
       'A compelling description for the banner, encouraging users to click.'
     ),

@@ -1,5 +1,8 @@
 import { createTransport } from 'nodemailer';
-import { generateDigitalDeliveryEmailHTML,generateOrderConfirmationHTML } from './email-templates';
+import { render } from '@react-email/render';
+import DigitalDeliveryEmail from '@/emails/digital-delivery';
+import OrderConfirmationEmail from '@/emails/order-confirmation';
+import ShippingConfirmationEmail from '@/emails/shipping-confirmation';
 
 const transporter = createTransport({
   host: process.env.SMTP_HOST,
@@ -24,12 +27,12 @@ export async function sendDigitalDeliveryEmail({
   expiresAt: Date;
   orderReference: string;
 }) {
-  const emailHtml = generateDigitalDeliveryEmailHTML({
+  const emailHtml = render(DigitalDeliveryEmail({
     bookTitle,
     downloadUrl,
     expiresAt: expiresAt.toLocaleString(),
     orderReference,
-  });
+  }));
 
   await transporter.sendMail({
     from: `"${process.env.EMAIL_FROM_NAME}" <${process.env.EMAIL_FROM_ADDRESS}>`,
@@ -56,7 +59,7 @@ export async function sendOrderConfirmationEmail({
     estimatedDelivery?: string;
   };
 }) {
-  const emailHtml = generateOrderConfirmationHTML(orderDetails);
+  const emailHtml = render(OrderConfirmationEmail(orderDetails));
 
   await transporter.sendMail({
     from: `"${process.env.EMAIL_FROM_NAME}" <${process.env.EMAIL_FROM_ADDRESS}>`,
@@ -64,4 +67,26 @@ export async function sendOrderConfirmationEmail({
     subject: `Order Confirmation - #${orderDetails.orderReference}`,
     html: emailHtml,
   });
+}
+
+export async function sendShippingConfirmationEmail({
+    to,
+    orderReference,
+    trackingUrl,
+}: {
+    to: string;
+    orderReference: string;
+    trackingUrl: string;
+}) {
+    const emailHtml = render(ShippingConfirmationEmail({
+        orderReference,
+        trackingUrl,
+    }));
+
+    await transporter.sendMail({
+        from: `"${process.env.EMAIL_FROM_NAME}" <${process.env.EMAIL_FROM_ADDRESS}>`,
+        to,
+        subject: `Your order #${orderReference} has shipped!`,
+        html: emailHtml,
+    });
 }
