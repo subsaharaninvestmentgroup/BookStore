@@ -1,8 +1,11 @@
+
 import { createTransport } from 'nodemailer';
 import { render } from '@react-email/render';
 import DigitalDeliveryEmail from '@/emails/digital-delivery';
 import OrderConfirmationEmail from '@/emails/order-confirmation';
 import ShippingConfirmationEmail from '@/emails/shipping-confirmation';
+import { db } from './firebase';
+import { doc, getDoc } from 'firebase/firestore';
 
 const transporter = createTransport({
   host: process.env.SMTP_HOST,
@@ -13,6 +16,20 @@ const transporter = createTransport({
     pass: process.env.SMTP_PASS,
   },
 });
+
+async function getCompanyEmail(): Promise<string | null> {
+    try {
+        const settingsRef = doc(db, 'storeSettings', 'main');
+        const settingsSnap = await getDoc(settingsRef);
+        if (settingsSnap.exists() && settingsSnap.data().companyEmail) {
+            return settingsSnap.data().companyEmail;
+        }
+        return null;
+    } catch (error) {
+        console.error("Could not fetch company email setting:", error);
+        return null;
+    }
+}
 
 export async function sendDigitalDeliveryEmail({
   to,
@@ -60,18 +77,19 @@ export async function sendOrderConfirmationEmail({
   };
 }) {
   const emailHtml = await render(OrderConfirmationEmail(orderDetails));
-  const companyEmail = process.env.COMPANY_EMAIL;
+  const companyEmail = await getCompanyEmail();
+
+  const recipients = [to];
+  if (companyEmail) {
+      recipients.push(companyEmail);
+  }
 
   const mailOptions = {
       from: `"${process.env.EMAIL_FROM_NAME}" <${process.env.EMAIL_FROM_ADDRESS}>`,
-      to,
+      to: recipients.join(', '),
       subject: `Order Confirmation - #${orderDetails.orderReference}`,
       html: emailHtml,
   };
-
-  if(companyEmail) {
-      mailOptions.to = `${to}, ${companyEmail}`;
-  }
 
   await transporter.sendMail(mailOptions);
 }

@@ -7,6 +7,8 @@ import type { Book } from "@/lib/types";
 import { sendShippingConfirmationEmail } from "@/lib/email";
 import * as fs from 'fs/promises';
 import * as path from 'path';
+import { db } from "@/lib/firebase";
+import { doc, setDoc } from "firebase/firestore";
 
 export async function generateBannerAction(book: Book): Promise<{ title: string, description: string } | null> {
     try {
@@ -36,32 +38,13 @@ export async function sendShippingEmailAction(params: { to: string; orderReferen
     }
 }
 
-async function updateEnvFile(key: string, value: string) {
-    const envPath = path.resolve(process.cwd(), '.env');
+export async function saveCompanyEmailAction(email: string): Promise<{ success: boolean, error?: string }> {
     try {
-        let envFileContent = await fs.readFile(envPath, 'utf8');
-        const keyRegex = new RegExp(`^${key}=.*$`, 'm');
-
-        if (keyRegex.test(envFileContent)) {
-            envFileContent = envFileContent.replace(keyRegex, `${key}=${value}`);
-        } else {
-            envFileContent += `\n${key}=${value}`;
-        }
-
-        await fs.writeFile(envPath, envFileContent);
+        const settingsRef = doc(db, 'storeSettings', 'main');
+        await setDoc(settingsRef, { companyEmail: email }, { merge: true });
         return { success: true };
     } catch (error: any) {
-        if (error.code === 'ENOENT') {
-            // .env file doesn't exist, create it
-            await fs.writeFile(envPath, `${key}=${value}`);
-            return { success: true };
-        }
-        console.error('Failed to update .env file:', error);
+        console.error('Failed to save company email:', error);
         return { success: false, error: error.message };
     }
-}
-
-
-export async function saveCompanyEmailAction(email: string): Promise<{ success: boolean, error?: string }> {
-    return updateEnvFile('COMPANY_EMAIL', email);
 }
