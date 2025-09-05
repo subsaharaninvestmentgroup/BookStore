@@ -138,8 +138,8 @@ const CustomerDetailSheet = ({ customer, open, onOpenChange, currencySymbol }: {
                         {customerOrders.map(order => (
                             <TableRow key={order.id}>
                                 <TableCell>
-                                    <p className='font-medium'>{order.id}</p>
-                                    <p className='text-xs text-muted-foreground'>{order.date}</p>
+                                    <p className='font-medium'>{order.id.substring(0,7)}</p>
+                                    <p className='text-xs text-muted-foreground'>{new Date(order.date).toLocaleString()}</p>
                                 </TableCell>
                                 <TableCell>
                                     <Badge variant={order.shippingStatus === 'Delivered' ? 'default' : 'secondary'} className='capitalize'>{order.shippingStatus}</Badge>
@@ -282,3 +282,5 @@ export default function Customers() {
     </>
   );
 }
+
+    

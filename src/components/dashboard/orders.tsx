@@ -57,7 +57,7 @@ const OrderDetailSheet = ({ order, open, onOpenChange, currencySymbol }: { order
                 <SheetHeader className="mb-6">
                     <SheetTitle className="text-2xl">Order #{order.id.substring(0, 7)}</SheetTitle>
                     <SheetDescription>
-                        Details for order placed on {new Date(order.date).toLocaleDateString()}.
+                        Details for order placed on {new Date(order.date).toLocaleString()}.
                     </SheetDescription>
                 </SheetHeader>
                 <div className="space-y-6">
@@ -293,7 +293,7 @@ export default function Orders() {
                     </DropdownMenu>
                   </TableCell>
                   <TableCell className="hidden md:table-cell">
-                      {new Date(order.date).toLocaleDateString()}
+                      {new Date(order.date).toLocaleString()}
                   </TableCell>
                   <TableCell className="text-right">{currencySymbol}{order.amount.toFixed(2)}</TableCell>
                   <TableCell onClick={(e) => e.stopPropagation()}>
@@ -365,3 +365,5 @@ export default function Orders() {
     </>
   );
 }
+
+    
