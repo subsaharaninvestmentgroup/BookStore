@@ -1,6 +1,9 @@
 
 import { db } from './firebase';
 import { collection, addDoc, serverTimestamp, query, where, getDocs, doc, runTransaction } from 'firebase/firestore';
+import { generateSecureDownloadUrl, getDownloadExpiration } from './secure-downloads';
+import { sendDigitalDeliveryEmail, sendOrderConfirmationEmail } from './email';
+import type { Order } from './types';
 
 export async function recordOrder(order: any) {
   const col = collection(db, 'orders');
@@ -12,10 +15,8 @@ export async function recordOrder(order: any) {
   return { id: docRef.id };
 }
 
-import { generateSecureDownloadUrl, getDownloadExpiration } from './secure-downloads';
-import { sendDigitalDeliveryEmail, sendOrderConfirmationEmail } from './email';
 
-export async function fulfillOrder(order: any) {
+export async function fulfillOrder(order: Order) {
   try {
     // Send order confirmation email first
     await sendOrderConfirmationEmail({
@@ -25,7 +26,7 @@ export async function fulfillOrder(order: any) {
         items: order.items.map((item: any) => ({
           title: item.bookTitle,
           format: order.digital ? 'digital' : 'physical',
-          price: order.amount
+          price: order.amount / item.quantity
         })),
         total: order.amount,
         shippingAddress: order.address,
@@ -36,10 +37,10 @@ export async function fulfillOrder(order: any) {
     // Handle digital delivery
     if (order.digital && order.items && order.items.length) {
       const digitalItem = order.items.find((item: any) => item.bookId);
-      if (digitalItem) {
+      if (digitalItem && digitalItem.digitalFileUrl) {
         const downloadUrl = await generateSecureDownloadUrl({
           fileId: digitalItem.digitalFileUrl,
-          fileName: digitalItem.bookTitle,
+          fileName: digitalItem.bookTitle || 'digital-book',
           bookId: digitalItem.bookId,
           orderReference: order.paymentReference
         });
@@ -47,7 +48,7 @@ export async function fulfillOrder(order: any) {
         // Send digital delivery email with secure download link
         await sendDigitalDeliveryEmail({
           to: order.customerEmail,
-          bookTitle: digitalItem.bookTitle,
+          bookTitle: digitalItem.bookTitle || 'Your Book',
           downloadUrl,
           expiresAt: getDownloadExpiration(),
           orderReference: order.paymentReference
@@ -68,7 +69,7 @@ export async function fulfillOrder(order: any) {
       const shippingDetails = await createShippingOrder({
         name: order.customerName,
         address: order.address,
-        phone: order.customerPhone,
+        phone: order.customerPhone || '',
         orderRef: order.paymentReference,
         items: order.items
       });

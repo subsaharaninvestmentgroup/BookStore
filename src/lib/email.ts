@@ -60,13 +60,20 @@ export async function sendOrderConfirmationEmail({
   };
 }) {
   const emailHtml = await render(OrderConfirmationEmail(orderDetails));
+  const companyEmail = process.env.COMPANY_EMAIL;
 
-  await transporter.sendMail({
-    from: `"${process.env.EMAIL_FROM_NAME}" <${process.env.EMAIL_FROM_ADDRESS}>`,
-    to,
-    subject: `Order Confirmation - #${orderDetails.orderReference}`,
-    html: emailHtml,
-  });
+  const mailOptions = {
+      from: `"${process.env.EMAIL_FROM_NAME}" <${process.env.EMAIL_FROM_ADDRESS}>`,
+      to,
+      subject: `Order Confirmation - #${orderDetails.orderReference}`,
+      html: emailHtml,
+  };
+
+  if(companyEmail) {
+      mailOptions.to = `${to}, ${companyEmail}`;
+  }
+
+  await transporter.sendMail(mailOptions);
 }
 
 export async function sendShippingConfirmationEmail({
