@@ -185,7 +185,19 @@ export function BookForm({ bookId, onSaveSuccess, onCancel }: BookFormProps) {
       }
 
       const finalSupplementaryFiles = [...(formData.supplementaryFiles || []), ...uploadedFiles];
-      const bookData = { ...formData, imageUrl, digitalFile: digitalFileUrl, supplementaryFiles: finalSupplementaryFiles };
+      
+      const bookData: Partial<Book> = { 
+          ...formData, 
+          imageUrl, 
+          supplementaryFiles: finalSupplementaryFiles 
+      };
+      
+      if (digitalFileUrl) {
+          bookData.digitalFile = digitalFileUrl;
+      } else {
+          delete bookData.digitalFile;
+      }
+
       delete bookData.id;
 
       if (bookId) {
@@ -203,6 +215,7 @@ export function BookForm({ bookId, onSaveSuccess, onCancel }: BookFormProps) {
       }
       onSaveSuccess();
     } catch (error: any) {
+      console.error("Failed to save book:", error);
       toast({ variant: 'destructive', title: 'Error', description: `Failed to save book: ${error.message}` });
     } finally {
       setIsSaving(false);
@@ -292,7 +305,7 @@ export function BookForm({ bookId, onSaveSuccess, onCancel }: BookFormProps) {
                                 onClick={() => imageInputRef.current?.click()}
                             >
                                 {formData.imageUrl ? (
-                                    <Image src={formData.imageUrl} alt={formData.title || 'Book cover'} width={400} height={600} className="object-cover w-full h-full" />
+                                    <Image src={formData.imageUrl} alt={formData.title || 'Book cover'} width={400} height={600} className="object-cover w-full h-full" data-ai-hint="book cover" />
                                 ) : (
                                     <div className="text-center text-sm text-muted-foreground p-4">
                                         <BookImage className="mx-auto h-12 w-12 text-gray-400" />
@@ -428,7 +441,7 @@ export function BookForm({ bookId, onSaveSuccess, onCancel }: BookFormProps) {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8 py-4">
                          <div className="md:col-span-1">
                              {formData.imageUrl ? (
-                                <Image src={formData.imageUrl} alt={formData.title || 'Book cover'} width={400} height={600} className="object-cover w-full rounded-lg shadow-lg" />
+                                <Image src={formData.imageUrl} alt={formData.title || 'Book cover'} width={400} height={600} className="object-cover w-full rounded-lg shadow-lg" data-ai-hint="book cover" />
                             ) : (
                                 <div className="aspect-[2/3] w-full bg-muted rounded-lg flex items-center justify-center">
                                     <BookImage className="h-16 w-16 text-gray-400" />
@@ -466,3 +479,5 @@ export function BookForm({ bookId, onSaveSuccess, onCancel }: BookFormProps) {
     </div>
   );
 }
+
+    
