@@ -2,7 +2,7 @@
 'use client';
 
 import * as React from 'react';
-import { MoreHorizontal, File, X, ShoppingCart, User, Mail, Home, CreditCard } from 'lucide-react';
+import { MoreHorizontal, File, X, ShoppingCart, User, Mail, Home, CreditCard, ArrowUpDown } from 'lucide-react';
 import type { Order } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -38,7 +38,7 @@ import {
     TabsTrigger,
 } from "@/components/ui/tabs"
 import { db } from '@/lib/firebase';
-import { collection, getDocs, doc, updateDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, updateDoc, query, orderBy } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { getCurrencySymbol, getCachedData, setCachedData, clearCache } from '@/lib/utils';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '../ui/sheet';
@@ -155,6 +155,7 @@ export default function Orders() {
   const [orders, setOrders] = React.useState<Order[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [activeTab, setActiveTab] = React.useState('all');
+  const [sortDirection, setSortDirection] = React.useState<'asc' | 'desc'>('desc');
   const { toast } = useToast();
   const [currencySymbol, setCurrencySymbol] = React.useState('$');
   const [selectedOrder, setSelectedOrder] = React.useState<Order | null>(null);
@@ -167,17 +168,19 @@ export default function Orders() {
 
   const fetchOrders = React.useCallback(async () => {
     setLoading(true);
-    const cachedOrders = getCachedData('orders');
+    const cacheKey = `orders_${sortDirection}`;
+    const cachedOrders = getCachedData(cacheKey);
     if (cachedOrders) {
         setOrders(cachedOrders);
         setLoading(false);
         return;
     }
     try {
-        const querySnapshot = await getDocs(collection(db, 'orders'));
+        const ordersQuery = query(collection(db, 'orders'), orderBy('date', sortDirection));
+        const querySnapshot = await getDocs(ordersQuery);
         const ordersData = querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })) as Order[];
         setOrders(ordersData);
-        setCachedData('orders', ordersData);
+        setCachedData(cacheKey, ordersData);
     } catch(error: any) {
         toast({
             variant: 'destructive',
@@ -187,7 +190,7 @@ export default function Orders() {
     } finally {
         setLoading(false);
     }
-  }, [toast]);
+  }, [toast, sortDirection]);
 
   React.useEffect(() => {
     fetchOrders();
@@ -199,7 +202,9 @@ export default function Orders() {
         await updateDoc(orderRef, { shippingStatus: status });
         const updatedOrders = orders.map(o => o.id === orderId ? { ...o, shippingStatus: status } : o);
         setOrders(updatedOrders);
-        setCachedData('orders', updatedOrders); // Update cache
+        clearCache('orders_asc');
+        clearCache('orders_desc');
+        setCachedData(`orders_${sortDirection}`, updatedOrders); // Update cache
         clearCache('dashboardOverview'); // Invalidate overview cache
         toast({ title: 'Success', description: 'Order status updated.'});
     } catch (error: any) {
@@ -215,6 +220,10 @@ export default function Orders() {
     setSelectedOrder(order);
     setIsSheetOpen(true);
   };
+  
+  const toggleSortDirection = () => {
+      setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+  }
 
   const filteredOrders = orders.filter(order => {
     if (activeTab === 'all') return true;
@@ -332,6 +341,12 @@ export default function Orders() {
                 <TabsTrigger value="cancelled" className="hidden sm:flex">Cancelled</TabsTrigger>
                 </TabsList>
                 <div className="ml-auto flex items-center gap-2">
+                <Button size="sm" variant="outline" className="h-8 gap-1" onClick={toggleSortDirection}>
+                    <ArrowUpDown className="h-3.5 w-3.5" />
+                    <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                    Sort by Time
+                    </span>
+                </Button>
                 <Button size="sm" variant="outline" className="h-8 gap-1">
                     <File className="h-3.5 w-3.5" />
                     <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
