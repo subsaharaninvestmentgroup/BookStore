@@ -1,0 +1,57 @@
+How to Use Your Bookstore Dashboard
+
+Welcome to your bookstore's control panel! This guide will walk you through how to manage your online store using the simple tools available in your dashboard.
+
+## 1. Getting Started: The Dashboard Overview
+
+When you first log in, you'll land on the **Dashboard**. This is your command center, giving you a quick look at your store's performance. You can see:
+- Total Revenue
+- Total Sales
+- Number of Customers
+- Your Best-Selling Book
+- A chart of your sales over time
+- Your most recent orders
+
+Use the menu on the left side of the screen to navigate to different sections.
+
+## 2. How to Manage Orders
+
+Go to the **Orders** section from the side menu to see a list of all customer orders.
+
+- **View Order Details**: Click on any order in the list to see more details, like what the customer bought and their shipping address.
+- **Update Shipping Status**: Find the order you want to update. Click on its current status (e.g., "Processing") to open a dropdown menu. You can then change the status to "Shipped," "Delivered," or "Cancelled."
+- **Add a Tracking Link**: If you select "Shipped" for a physical book, a box will appear asking for a tracking URL. Paste the tracking link from your shipping provider here. This will automatically send an email to the customer with the tracking link so they can follow their package.
+
+## 3. How to Manage Your Books
+
+Go to the **Books** section to manage your book inventory.
+
+- **Add a New Book**: Click the "Add Book" button. Fill out the form with the book's title, author, price, description, and other details. You can also upload a book cover image and any extra files (like workbooks or audio guides).
+- **Edit an Existing Book**: Find the book you want to edit in the list. Click the three-dots icon on the right and select "Edit."
+- **Delete a Book**: Click the three-dots icon and select "Delete."
+- **Share a Book Link**: To get a direct link to a book's page in your store, click the three-dots icon next to the book and select "Share." The link will be copied to your clipboard, so you can paste it anywhere you like (e.g., in an email or a social media post).
+
+## 4. How to Manage Customers
+
+Go to the **Customers** section to see a list of everyone who has created an account or made a purchase.
+
+- **View Customer Details**: Click on any customer to see their contact information, how many orders they've made, and how much they've spent in total.
+
+## 5. How to Create Promotional Banners
+
+Go to the **Banners** section to create beautiful banners for your store's homepage.
+
+- **Add a New Banner**: Click the "Add Banner" button.
+- **Fill in the Details**: Give your banner a title and a description.
+- **Link to a Book**: You can link the banner directly to one of your books. When a customer clicks the banner, they'll be taken straight to that book's page.
+- **Generate with AI**: If you've linked a book, you can click the "Generate with AI" button, and the system will automatically write a catchy title and description for you!
+- **Activate the Banner**: Make sure the "Set banner as active" switch is turned on for it to appear on your storefront.
+
+## 6. How to Change Your Store Settings
+
+Go to the **Settings** section to adjust your store's preferences.
+
+- **Change Currency**: You can change the currency displayed in your store (e.g., from USD to ZAR).
+- **Set Company Email**: You can enter a company email address here. This is the email that will receive a copy of every order confirmation, so you always have a record.
+
+This guide covers all the main features of your dashboard. Feel free to explore, and enjoy managing your new online bookstore!
