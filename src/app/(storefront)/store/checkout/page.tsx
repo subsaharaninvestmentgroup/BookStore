@@ -1,7 +1,7 @@
 
 "use client";
 
-import React from 'react';
+import React, { Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { db } from '@/lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
@@ -14,7 +14,7 @@ import { Label } from '@/components/ui/label';
 
 type PurchaseFormat = 'digital' | 'physical';
 
-export default function CheckoutPage() {
+function CheckoutForm() {
   const params = useSearchParams();
   const router = useRouter();
   const bookId = params.get('bookId');
@@ -289,5 +289,22 @@ export default function CheckoutPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+// Add a loading component for the Suspense boundary
+function CheckoutLoading() {
+  return (
+    <div className="container max-w-6xl py-8">
+      <div className="h-[600px] animate-pulse bg-muted rounded-lg"></div>
+    </div>
+  );
+}
+
+export default function CheckoutPage() {
+  return (
+    <Suspense fallback={<CheckoutLoading />}>
+      <CheckoutForm />
+    </Suspense>
   );
 }
