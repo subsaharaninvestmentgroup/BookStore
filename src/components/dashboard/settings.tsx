@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { saveCompanyEmailAction } from '@/app/actions';
 
 const CURRENCIES = [
     { value: 'USD', label: '$ USD' },
@@ -18,21 +19,42 @@ const CURRENCIES = [
 
 export default function Settings() {
     const [currency, setCurrency] = React.useState('ZAR');
+    const [companyEmail, setCompanyEmail] = React.useState('');
+    const [isSaving, setIsSaving] = React.useState(false);
     const { toast } = useToast();
 
     React.useEffect(() => {
         const savedCurrency = localStorage.getItem('bookstore-currency') || 'ZAR';
         setCurrency(savedCurrency);
+        // We can't read the .env file from the client, 
+        // so we'll leave this blank initially. The user can enter a new value.
     }, []);
 
-    const handleSaveSettings = () => {
+    const handleSaveSettings = async () => {
+        setIsSaving(true);
         localStorage.setItem('bookstore-currency', currency);
+
+        if (companyEmail) {
+            const result = await saveCompanyEmailAction(companyEmail);
+            if (!result.success) {
+                toast({
+                    variant: 'destructive',
+                    title: 'Error Saving Company Email',
+                    description: result.error,
+                });
+                setIsSaving(false);
+                return;
+            }
+        }
+
         toast({
             title: 'Success',
-            description: 'Settings saved successfully. Changes will be reflected across the app.',
+            description: 'Settings saved successfully. Changes will be reflected across the app. You may need to restart the server for all changes to take effect.',
         });
+
         // Optionally, force a reload to ensure all components update
-        window.location.reload();
+        // We will wait a bit for the user to read the toast
+        setTimeout(() => window.location.reload(), 2000);
     };
 
     return (
@@ -66,7 +88,22 @@ export default function Settings() {
                                 Choose the currency for your store.
                             </p>
                         </div>
-                        <Button onClick={handleSaveSettings}>Save Settings</Button>
+                        <div className="space-y-2">
+                            <Label htmlFor="companyEmail">Company Email</Label>
+                            <Input
+                                id="companyEmail"
+                                type="email"
+                                placeholder="notifications@example.com"
+                                value={companyEmail}
+                                onChange={(e) => setCompanyEmail(e.target.value)}
+                            />
+                            <p className="text-sm text-muted-foreground">
+                                The email address to receive order confirmations.
+                            </p>
+                        </div>
+                        <Button onClick={handleSaveSettings} disabled={isSaving}>
+                            {isSaving ? 'Saving...' : 'Save Settings'}
+                        </Button>
                     </div>
                 </CardContent>
             </Card>
