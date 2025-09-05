@@ -1,19 +1,19 @@
 'use client';
 
 import * as React from 'react';
-import { Star, ThumbsUp, Check } from 'lucide-react';
+import { Star, ThumbsUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import type { Review, BookRating } from '@/lib/types';
 import { db } from '@/lib/firebase';
-import { collection, query, where, getDocs, addDoc, doc, updateDoc, orderBy, getDoc, setDoc, runTransaction } from 'firebase/firestore';
+import { collection, query, where, getDocs, addDoc, doc, updateDoc, orderBy, getDoc, setDoc } from 'firebase/firestore';
 
 interface BookReviewsProps {
   bookId: string;
   initialRating?: BookRating;
-  onRatingUpdate?: (rating: BookRating) => void;
+  reviewCount: number;
 }
 
 const createOrUpdateCustomerFromReview = async (email: string, name: string) => {
@@ -40,7 +40,7 @@ const createOrUpdateCustomerFromReview = async (email: string, name: string) => 
 };
 
 
-export function BookReviews({ bookId, initialRating, onRatingUpdate }: BookReviewsProps) {
+export function BookReviews({ bookId, initialRating, reviewCount }: BookReviewsProps) {
   const [reviews, setReviews] = React.useState<Review[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [userReview, setUserReview] = React.useState({
@@ -52,8 +52,10 @@ export function BookReviews({ bookId, initialRating, onRatingUpdate }: BookRevie
   const [submitting, setSubmitting] = React.useState(false);
   const [sortBy, setSortBy] = React.useState<'recent' | 'helpful'>('recent');
   const { toast } = useToast();
+  const [currentRating, setCurrentRating] = React.useState(initialRating);
+  const [currentReviewCount, setCurrentReviewCount] = React.useState(reviewCount);
 
-  const fetchReviews = async () => {
+  const fetchReviews = React.useCallback(async () => {
     setLoading(true);
     try {
       const reviewsQuery = query(
@@ -74,11 +76,11 @@ export function BookReviews({ bookId, initialRating, onRatingUpdate }: BookRevie
     } finally {
       setLoading(false);
     }
-  };
+  }, [bookId, sortBy, toast]);
 
   React.useEffect(() => {
     fetchReviews();
-  }, [bookId, sortBy]);
+  }, [fetchReviews]);
 
   const submitReview = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -99,6 +101,7 @@ export function BookReviews({ bookId, initialRating, onRatingUpdate }: BookRevie
           title: 'Error',
           description: 'Please enter your email address.',
         });
+        setSubmitting(false);
         return;
       }
 
@@ -116,6 +119,7 @@ export function BookReviews({ bookId, initialRating, onRatingUpdate }: BookRevie
           title: 'Error',
           description: 'You have already reviewed this book.',
         });
+        setSubmitting(false);
         return;
       }
 
@@ -139,23 +143,24 @@ export function BookReviews({ bookId, initialRating, onRatingUpdate }: BookRevie
       const bookDoc = await getDoc(bookRef);
       
       if (bookDoc.exists()) {
-        const currentRating = bookDoc.data().rating || {
+        const bookData = bookDoc.data();
+        const currentRatingData = bookData.rating || {
           average: 0,
           total: 0,
-          distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }
+          distribution: { '1': 0, '2': 0, '3': 0, '4': 0, '5': 0 }
         };
 
-        const newTotal = currentRating.total + 1;
+        const newTotal = currentRatingData.total + 1;
         const newDistribution = {
-          ...currentRating.distribution,
-          [userReview.rating]: (currentRating.distribution[userReview.rating] || 0) + 1
+          ...currentRatingData.distribution,
+          [userReview.rating]: (currentRatingData.distribution[userReview.rating] || 0) + 1
         };
         
         const newAverage = (
-          (currentRating.average * currentRating.total + userReview.rating) / newTotal
+          (currentRatingData.average * currentRatingData.total + userReview.rating) / newTotal
         );
 
-        const updatedRating = {
+        const updatedRating: BookRating = {
           average: Number(newAverage.toFixed(1)),
           total: newTotal,
           distribution: newDistribution
@@ -165,10 +170,9 @@ export function BookReviews({ bookId, initialRating, onRatingUpdate }: BookRevie
           rating: updatedRating,
           reviewCount: newTotal
         });
-
-        if (onRatingUpdate) {
-          onRatingUpdate(updatedRating);
-        }
+        
+        setCurrentRating(updatedRating);
+        setCurrentReviewCount(newTotal);
       }
 
       // Reset form and refresh reviews
@@ -221,7 +225,8 @@ export function BookReviews({ bookId, initialRating, onRatingUpdate }: BookRevie
           onClick={() => onChange?.(rating)}
           className={`text-lg ${
             rating <= value ? 'text-yellow-400' : 'text-gray-300'
-          } focus:outline-none transition-colors`}
+          } focus:outline-none transition-colors ${onChange ? 'cursor-pointer' : 'cursor-default'}`}
+          disabled={!onChange}
         >
           <Star className="w-6 h-6 fill-current" />
         </button>
@@ -232,30 +237,30 @@ export function BookReviews({ bookId, initialRating, onRatingUpdate }: BookRevie
   return (
     <div className="space-y-8">
       {/* Rating Summary */}
-      {initialRating && (
+      {currentRating && currentRating.total > 0 && (
         <div className="flex items-start gap-8 p-6 bg-muted/50 rounded-lg">
           <div className="text-center">
-            <div className="text-4xl font-bold">{initialRating.average}</div>
-            <StarRating value={Math.round(initialRating.average)} />
+            <div className="text-4xl font-bold">{currentRating.average}</div>
+            <StarRating value={Math.round(currentRating.average)} />
             <div className="text-sm text-muted-foreground mt-1">
-              {initialRating.total} {initialRating.total === 1 ? 'review' : 'reviews'}
+              {currentRating.total} {currentRating.total === 1 ? 'review' : 'reviews'}
             </div>
           </div>
           <div className="flex-1 space-y-2">
-            {Object.entries(initialRating.distribution)
+            {Object.entries(currentRating.distribution)
               .sort((a, b) => Number(b[0]) - Number(a[0]))
               .map(([rating, count]) => (
                 <div key={rating} className="flex items-center gap-2">
-                  <div className="w-12 text-sm">{rating} stars</div>
+                  <div className="w-12 text-sm text-right pr-2">{rating} star</div>
                   <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
                     <div
                       className="h-full bg-yellow-400"
                       style={{
-                        width: `${(count / initialRating.total) * 100}%`,
+                        width: `${currentRating.total > 0 ? (count / currentRating.total) * 100 : 0}%`,
                       }}
                     />
                   </div>
-                  <div className="w-12 text-sm text-right">{count}</div>
+                  <div className="w-12 text-sm text-left">{count}</div>
                 </div>
               ))}
           </div>
@@ -318,15 +323,17 @@ export function BookReviews({ bookId, initialRating, onRatingUpdate }: BookRevie
       {/* Reviews List */}
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold">Customer Reviews</h3>
-          <select
-            className="text-sm border rounded-md p-1"
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as 'recent' | 'helpful')}
-          >
-            <option value="recent">Most Recent</option>
-            <option value="helpful">Most Helpful</option>
-          </select>
+          <h3 className="text-lg font-semibold">Customer Reviews ({currentReviewCount})</h3>
+          {reviews.length > 0 && (
+            <select
+              className="text-sm border rounded-md p-1 bg-background"
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as 'recent' | 'helpful')}
+            >
+              <option value="recent">Most Recent</option>
+              <option value="helpful">Most Helpful</option>
+            </select>
+          )}
         </div>
 
         {loading ? (
@@ -341,22 +348,23 @@ export function BookReviews({ bookId, initialRating, onRatingUpdate }: BookRevie
                   <div>
                     <div className="flex items-center gap-2">
                       <StarRating value={review.rating} />
+                       <div className="font-semibold text-sm ml-2">{review.name}</div>
                     </div>
                     <div className="text-sm text-muted-foreground mt-1">
-                      By {review.name} on {new Date(review.createdAt).toLocaleDateString()}
+                      on {new Date(review.createdAt).toLocaleDateString()}
                     </div>
                   </div>
                   <Button
-                    variant="ghost"
+                    variant="outline"
                     size="sm"
                     onClick={() => markHelpful(review.id)}
                     className="text-sm"
                   >
-                    <ThumbsUp className="w-4 h-4 mr-1" />
+                    <ThumbsUp className="w-4 h-4 mr-2" />
                     Helpful ({review.helpful})
                   </Button>
                 </div>
-                <p className="mt-3 text-sm">{review.comment}</p>
+                <p className="mt-3 text-sm text-foreground/80">{review.comment}</p>
               </div>
             ))}
           </div>
