@@ -21,7 +21,7 @@ export default function StorefrontLayout({
             <span className="sr-only">Bookstore</span>
           </Link>
           <Link href="/store/all-books" className="text-foreground transition-colors hover:text-foreground">
-            All Books
+            Explore Books
           </Link>
      
         </nav>
@@ -39,7 +39,7 @@ export default function StorefrontLayout({
                 <span className="sr-only">Bookstore</span>
               </Link>
               <Link href="/store/all-books" className="hover:text-foreground">
-                Explore more Books
+                Explore Books
               </Link>
             
             </nav>
@@ -56,10 +56,10 @@ export default function StorefrontLayout({
               />
             </div>
           </form>
-          <Button variant="ghost" size="icon" className="rounded-full">
+          {/* <Button variant="ghost" size="icon" className="rounded-full">
             <ShoppingCart className="h-5 w-5" />
             <span className="sr-only">Shopping Cart</span>
-          </Button>
+          </Button> */}
           <Link href="/login">
             <Button variant="secondary" size="icon" className="rounded-full">
                 <User className="h-5 w-5" />
