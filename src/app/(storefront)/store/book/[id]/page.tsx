@@ -14,6 +14,7 @@ import { getCurrencySymbol, getCachedData, setCachedData } from '@/lib/utils';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { BookReviews } from '@/components/store/book-reviews';
+import { useToast } from '@/hooks/use-toast';
 
 
 export default function BookPage({ params }: { params: { id: string } }) {
@@ -21,6 +22,7 @@ export default function BookPage({ params }: { params: { id: string } }) {
     const [loading, setLoading] = React.useState(true);
     const [currencySymbol, setCurrencySymbol] = React.useState('$');
     const router = useRouter();
+    const { toast } = useToast();
 
      React.useEffect(() => {
         const savedCurrency = localStorage.getItem('bookstore-currency') || 'ZAR';
@@ -63,6 +65,33 @@ export default function BookPage({ params }: { params: { id: string } }) {
 
         fetchBook();
     }, [params]);
+
+    const handleShare = async () => {
+        if (!book) return;
+
+        const shareData = {
+            title: book.title,
+            text: `Check out this book: ${book.title} by ${book.author}`,
+            url: window.location.href
+        };
+
+        try {
+            if(navigator.share) {
+                await navigator.share(shareData);
+            } else {
+                await navigator.clipboard.writeText(window.location.href);
+                toast({ title: "Copied!", description: "Link copied to clipboard." });
+            }
+        } catch (error) {
+            console.error('Error sharing:', error);
+            toast({
+                variant: 'destructive',
+                title: 'Error',
+                description: 'Could not share the page.',
+            })
+        }
+    };
+
 
     if (loading) {
         return (
@@ -110,7 +139,7 @@ export default function BookPage({ params }: { params: { id: string } }) {
                                 <h1 className="text-3xl lg:text-4xl font-bold">{book.title}</h1>
                                 <p className="text-lg text-muted-foreground mt-1">by <a href="#" className="text-primary hover:underline">{book.author}</a> | Format: {book.details}</p>
                             </div>
-                            <Button variant="ghost" size="icon">
+                            <Button variant="ghost" size="icon" onClick={handleShare}>
                                 <Upload className="h-5 w-5" />
                             </Button>
                         </div>
