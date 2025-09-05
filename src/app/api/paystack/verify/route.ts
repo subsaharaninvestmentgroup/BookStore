@@ -49,33 +49,52 @@ export async function POST(req: Request) {
       const address = finalMetadata?.address || '';
       const phone = finalMetadata?.phone || '';
 
+      // Clean up the order item data
+      const orderItem = {
+        bookId: bookId || null,
+        quantity: 1,
+        bookTitle: bookData?.title || 'Unknown Book',
+        // Only include digitalFileUrl for digital purchases
+        ...(isDigital && bookData?.digitalFile?.url ? { digitalFileUrl: bookData.digitalFile.url } : {})
+      };
+
+      // Build the order with clean data
       const order: Omit<Order, 'id' | 'date'> = {
-        customerName,
-        customerEmail,
-        customerPhone: phone,
-        items: [{ 
-          bookId: bookId, 
-          quantity: 1, 
-          bookTitle: bookData?.title,
-          digitalFileUrl: isDigital ? bookData?.digitalFile?.url : undefined,
-        }],
-        amount,
+        customerName: customerName || 'Customer',
+        customerEmail: customerEmail || '',
+        customerPhone: phone || '',
+        items: [orderItem],
+        amount: amount || 0,
         paymentStatus: 'Paid',
-        shippingStatus: isDigital ? 'Delivered' : 'Processing', // Digital orders are instantly "Delivered"
+        shippingStatus: isDigital ? 'Delivered' : 'Processing',
         paymentReference: reference,
         digital: isDigital,
-        address,
-        purchaseFormat
+        address: address || '',
+        purchaseFormat: purchaseFormat || 'physical'
       };
+
+      // Remove any remaining undefined values
+      const cleanOrder = Object.entries(order).reduce((acc, [key, value]) => {
+        if (value !== undefined && value !== null) {
+          acc[key] = value;
+        } else if (key === 'items') {
+          // Ensure items is always an array
+          acc[key] = [];
+        } else {
+          // Provide appropriate default values based on field type
+          acc[key] = typeof value === 'string' ? '' : 0;
+        }
+        return acc;
+      }, {} as Record<string, any>);
       
-      const saved = await recordOrder(order);
-      await fulfillOrder({ ...order, id: saved.id, date: new Date().toISOString() });
+      const saved = await recordOrder(cleanOrder);
+      await fulfillOrder({ ...cleanOrder, id: saved.id, date: new Date().toISOString() });
       await createOrUpdateCustomerFromOrder({
-        name: customerName,
-        email: customerEmail,
-        amount,
-        address: order.address,
-        phone: order.customerPhone,
+        name: customerName || 'Customer',
+        email: customerEmail || '',
+        amount: amount || 0,
+        address: address || '',
+        phone: phone || '',
       });
       return NextResponse.json({ success: true, orderId: saved.id });
     }

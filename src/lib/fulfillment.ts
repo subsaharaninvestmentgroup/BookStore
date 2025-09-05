@@ -158,16 +158,37 @@ export async function createOrUpdateCustomerFromOrder(details: { name: string, e
             const newTotalOrders = (currentData.totalOrders || 0) + 1;
             const newTotalSpent = (currentData.totalSpent || 0) + details.amount;
 
+            // Prepare update data with new fields and existing data
             const updateData: Record<string, any> = {
                 totalOrders: newTotalOrders,
                 totalSpent: newTotalSpent,
+                name: details.name || currentData.name || 'Customer', // Fallback to existing name or default
+                lastOrderDate: new Date().toISOString().split('T')[0],
             };
 
-            // Only include address and phone if they are provided and not undefined/null
-            if (details.address) updateData.address = details.address;
-            if (details.phone) updateData.phone = details.phone;
+            // Only update address and phone if they are provided and not empty strings
+            if (details.address?.trim()) {
+                updateData.address = details.address;
+            } else if (currentData.address) {
+                updateData.address = currentData.address;
+            }
 
-            transaction.update(customerRef, updateData);
+            if (details.phone?.trim()) {
+                updateData.phone = details.phone;
+            } else if (currentData.phone) {
+                updateData.phone = currentData.phone;
+            }
+
+            // Remove any undefined or null values
+            const cleanUpdateData = Object.entries(updateData)
+                .reduce((acc, [key, value]) => {
+                    if (value !== undefined && value !== null) {
+                        acc[key] = value;
+                    }
+                    return acc;
+                }, {} as Record<string, any>);
+
+            transaction.update(customerRef, cleanUpdateData);
         }
     });
 }
