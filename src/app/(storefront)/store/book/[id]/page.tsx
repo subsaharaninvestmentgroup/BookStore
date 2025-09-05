@@ -136,67 +136,83 @@ export default function BookPage({ params: { id: bookId } }: { params: { id: str
                         <div className="flex justify-between items-start">
                             <div>
                                 <h1 className="text-3xl lg:text-4xl font-bold">{book.title}</h1>
-                                <p className="text-lg text-muted-foreground mt-1">by <a href="#" className="text-primary hover:underline">{book.author}</a> | Format: {book.details}</p>
+                                {(book.author || book.details) && (
+                                    <p className="text-lg text-muted-foreground mt-1">
+                                        {book.author && <>by <a href="#" className="text-primary hover:underline">{book.author}</a></>}
+                                        {book.author && book.details && ' | '}
+                                        {book.details && `Format: ${book.details}`}
+                                    </p>
+                                )}
                             </div>
                             <Button variant="ghost" size="icon" onClick={handleShare}>
                                 <Upload className="h-5 w-5" />
                             </Button>
                         </div>
 
-                        <div className="flex items-center gap-4">
-                            <div className="flex items-center gap-0.5">
-                                {[...Array(5)].map((_, i) => (
-                                    <Star 
-                                        key={i} 
-                                        className={`w-5 h-5 ${
-                                            i < Math.round(book.rating?.average || 0)
-                                                ? "fill-yellow-400 text-yellow-400"
-                                                : "fill-gray-200 text-gray-200"
-                                        }`}
-                                    />
-                                ))}
+                        {book.reviewCount > 0 && book.rating && (
+                             <div className="flex items-center gap-4">
+                                <div className="flex items-center gap-0.5">
+                                    {[...Array(5)].map((_, i) => (
+                                        <Star 
+                                            key={i} 
+                                            className={`w-5 h-5 ${
+                                                i < Math.round(book.rating?.average || 0)
+                                                    ? "fill-yellow-400 text-yellow-400"
+                                                    : "fill-gray-200 text-gray-200"
+                                            }`}
+                                        />
+                                    ))}
+                                </div>
+                                <span className="text-sm text-muted-foreground">
+                                    {book.rating?.average.toFixed(1)} ({book.reviewCount} {book.reviewCount === 1 ? 'review' : 'reviews'})
+                                </span>
+                                <a href="#reviews" onClick={(e) => {
+                                    e.preventDefault();
+                                    document.getElementById('reviews')?.scrollIntoView({ behavior: 'smooth' });
+                                }} className="text-sm text-primary hover:underline">
+                                    {book.reviewCount > 0 ? 'See all reviews' : 'Be the first to review'}
+                                </a>
                             </div>
-                            <span className="text-sm text-muted-foreground">
-                                {book.rating?.average.toFixed(1)} ({book.reviewCount} {book.reviewCount === 1 ? 'review' : 'reviews'})
-                            </span>
-                            <a href="#reviews" onClick={(e) => {
-                                e.preventDefault();
-                                document.getElementById('reviews')?.scrollIntoView({ behavior: 'smooth' });
-                            }} className="text-sm text-primary hover:underline">
-                                {book.reviewCount > 0 ? 'See all reviews' : 'Be the first to review'}
-                            </a>
-                        </div>
+                        )}
+                       
                     </div>
                     
                     <Separator />
 
-                    <article className="prose prose-stone dark:prose-invert max-w-none text-muted-foreground">
-                        <p className="lead">{book.description}</p>
-                        <h3>Praise for {book.title}</h3>
-                        <blockquote>
-                            "A wonderful tribute to a true American hero."
-                        </blockquote>
-                    </article>
-
-                    <Separator />
+                     {book.description && (
+                         <article className="prose prose-stone dark:prose-invert max-w-none text-muted-foreground">
+                            <p className="lead">{book.description}</p>
+                        </article>
+                     )}
+                   
                     
                     <div className="space-y-8">
-                        <div>
-                            <h3 className="text-xl font-semibold mb-4">Book Details</h3>
-                            <ul className="list-disc pl-5 space-y-2 text-muted-foreground">
-                                <li>Published Date: {book.publicationDate}</li>
-                                <li>Format: {book.details}</li>
-                            </ul>
-                        </div>
-                        
-                        <Separator />
+                         {(book.publicationDate || book.details) && (
+                            <>
+                                <Separator />
+                                <div>
+                                    <h3 className="text-xl font-semibold mb-4">Book Details</h3>
+                                    <ul className="list-disc pl-5 space-y-2 text-muted-foreground">
+                                        {book.publicationDate && <li>Published Date: {book.publicationDate}</li>}
+                                        {book.details && <li>Format: {book.details}</li>}
+                                    </ul>
+                                </div>
+                            </>
+                         )}
 
-                        <div>
-                            <h3 className="text-xl font-semibold mb-4">Sample Text</h3>
-                            <p className="whitespace-pre-wrap font-serif text-base text-muted-foreground">
-                                {book.sampleText || "No sample text available."}
-                            </p>
-                        </div>
+                        
+                        {book.sampleText && (
+                            <>
+                                <Separator />
+                                <div>
+                                    <h3 className="text-xl font-semibold mb-4">Sample Text</h3>
+                                    <p className="whitespace-pre-wrap font-serif text-base text-muted-foreground">
+                                        {book.sampleText}
+                                    </p>
+                                </div>
+                            </>
+                        )}
+                        
                         
                         <Separator />
                         
@@ -230,7 +246,7 @@ export default function BookPage({ params: { id: bookId } }: { params: { id: str
                         <Separator />
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
                             <Truck className="h-4 w-4" />
-                            <span>Free shipping on orders over {currencySymbol}50</span>
+                            <span>Free shipping on orders over {currencySymbol}600</span>
                         </div>
                     </div>
                 </div>
