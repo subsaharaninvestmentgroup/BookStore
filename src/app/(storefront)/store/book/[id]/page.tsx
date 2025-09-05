@@ -49,6 +49,7 @@ export async function generateMetadata(
   return {
     title: `${book.title} by ${book.author}`,
     description: book.description,
+    authors: [{ name: book.author }],
     openGraph: {
       title: `${book.title} | Bookstore`,
       description: book.description,
@@ -62,8 +63,8 @@ export async function generateMetadata(
   }
 }
 
-export default async function BookPage({ params: { id: bookId } }: { params: { id: string } }) {
-    const book = await getBook(bookId);
+export default async function BookPage({ params }: { params: { id: string } }) {
+    const book = await getBook(params.id);
 
     if (!book) {
         notFound();
