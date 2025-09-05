@@ -193,12 +193,11 @@ export default function BookPage({ params }: { params: { id: string } }) {
 
                 {/* Actions Column */}
                 <div className="lg:col-span-1">
-                    <div className="sticky top-24 space-y-6 rounded-lg border border-border bg-card p-6">
+                     <div className="sticky top-24 space-y-6 rounded-lg border border-border bg-card p-6">
                         <div className="text-3xl font-bold">{currencySymbol}{book.price.toFixed(2)}</div>
                         
                         <div className="flex flex-col gap-2">
-                            <Button size="lg" className="w-full" onClick={() => router.push(`/store/checkout?bookId=${book?.id}`)}>Add to Cart</Button>
-                            <Button size="lg" variant="secondary" className="w-full">Buy Now</Button>
+                           <Button size="lg" className="w-full" onClick={() => router.push(`/store/checkout?bookId=${book?.id}`)}>Buy Now</Button>
                         </div>
                         <Separator />
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
