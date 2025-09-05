@@ -2,7 +2,7 @@
 'use client';
 
 import * as React from 'react';
-import { MoreHorizontal, PlusCircle, File, ListFilter, Store } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, File, ListFilter, Store, Share2 } from 'lucide-react';
 import type { Book } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -123,6 +123,21 @@ export default function Books({ onAddBook, onEditBook }: BooksProps) {
             title: 'Error',
             description: `Failed to delete book: ${error.message}`,
         });
+    }
+  };
+  
+  const handleShareBook = async (bookId: string) => {
+    const url = `${window.location.origin}/store/book/${bookId}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      toast({ title: "Copied!", description: "Book link copied to clipboard." });
+    } catch (error) {
+      console.error('Failed to copy:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Could not copy link.',
+      });
     }
   };
 
@@ -256,6 +271,7 @@ export default function Books({ onAddBook, onEditBook }: BooksProps) {
                       <DropdownMenuContent align="end">
                       <DropdownMenuLabel>Actions</DropdownMenuLabel>
                       <DropdownMenuItem onSelect={() => onEditBook(book.id)}>Edit</DropdownMenuItem>
+                      <DropdownMenuItem onSelect={() => handleShareBook(book.id)}>Share</DropdownMenuItem>
                       <DropdownMenuItem asChild>
                         <Link href={`/store/book/${book.id}`} target="_blank">View in Store</Link>
                       </DropdownMenuItem>
