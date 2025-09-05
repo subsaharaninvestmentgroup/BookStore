@@ -27,7 +27,7 @@ export async function sendDigitalDeliveryEmail({
   expiresAt: Date;
   orderReference: string;
 }) {
-  const emailHtml = render(DigitalDeliveryEmail({
+  const emailHtml = await render(DigitalDeliveryEmail({
     bookTitle,
     downloadUrl,
     expiresAt: expiresAt.toLocaleString(),
@@ -59,7 +59,7 @@ export async function sendOrderConfirmationEmail({
     estimatedDelivery?: string;
   };
 }) {
-  const emailHtml = render(OrderConfirmationEmail(orderDetails));
+  const emailHtml = await render(OrderConfirmationEmail(orderDetails));
 
   await transporter.sendMail({
     from: `"${process.env.EMAIL_FROM_NAME}" <${process.env.EMAIL_FROM_ADDRESS}>`,
@@ -78,7 +78,7 @@ export async function sendShippingConfirmationEmail({
     orderReference: string;
     trackingUrl: string;
 }) {
-    const emailHtml = render(ShippingConfirmationEmail({
+    const emailHtml = await render(ShippingConfirmationEmail({
         orderReference,
         trackingUrl,
     }));
