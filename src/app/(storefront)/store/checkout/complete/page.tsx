@@ -1,16 +1,20 @@
 
 "use client";
 
-import React from 'react';
+import React, { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { recordOrder, fulfillOrder, createOrUpdateCustomerFromOrder } from '@/lib/fulfillment';
+import { db } from '@/lib/firebase';
+import { doc, getDoc } from 'firebase/firestore';
+import type { Book, Order } from '@/lib/types';
 
-export default function CheckoutComplete() {
+function CheckoutCompleteContent() {
   const params = useSearchParams();
   const reference = params.get('reference');
   const [status, setStatus] = React.useState<'pending' | 'success' | 'failed' | 'verifying'>('verifying');
   const [error, setError] = React.useState<any>(null);
 
-  const verify = async () => {
+  const verify = React.useCallback(async () => {
     if (!reference) {
       setStatus('failed');
       setError('No payment reference found');
@@ -49,55 +53,74 @@ export default function CheckoutComplete() {
       setStatus('failed');
       setError(String(err));
     }
-  };
+  }, [reference]);
 
   React.useEffect(() => {
     verify();
-  }, []);
+  }, [verify]);
 
+  if (status === 'verifying') {
+    return (
+      <div className="p-8 bg-muted rounded-lg">
+        <h2 className="text-2xl font-semibold">Verifying payment...</h2>
+        <p className="mt-2 text-sm text-muted-foreground">Please wait while we confirm your transaction.</p>
+      </div>
+    );
+  }
+
+  if (status === 'success') {
+    return (
+      <div className="p-8 bg-muted rounded-lg">
+        <h2 className="text-3xl font-extrabold text-center text-green-600">Payment successful</h2>
+        <p className="mt-2 text-sm text-muted-foreground">Thank you — a confirmation has been sent to your email.</p>
+        <div className="mt-6 flex justify-center">
+          <a href="/store" className="inline-flex items-center px-6 py-2 bg-primary text-white rounded-md">Return to Store</a>
+        </div>
+      </div>
+    );
+  }
+
+  if (status === 'failed') {
+    return (
+      <div className="p-6 bg-muted rounded-lg">
+        <h2 className="text-2xl font-semibold text-red-600">Payment could not be verified</h2>
+        <p className="mt-2 text-sm text-muted-foreground">If you were charged, contact support and provide the reference below.</p>
+        <div className="mt-4 p-4 bg-background rounded">
+          <div className="text-sm">Reference</div>
+          <div className="font-mono mt-1">{reference}</div>
+        </div>
+        <div className="mt-4 flex justify-center gap-3">
+          <button 
+            onClick={() => {
+              setStatus('verifying');
+              setError(null);
+              verify();
+            }} 
+            className="inline-flex items-center px-5 py-2 bg-primary text-white rounded-md hover:bg-primary/90"
+          >
+            Retry Verification
+          </button>
+          <a href="/store" className="inline-flex items-center px-5 py-2 border rounded-md">Return to Store</a>
+        </div>
+      </div>
+    );
+  }
+
+  return null;
+}
+
+
+export default function CheckoutComplete() {
   return (
     <div className="container mx-auto p-8">
       <div className="max-w-3xl mx-auto text-center">
-        {status === 'verifying' && (
-          <div className="p-8 bg-muted rounded-lg">
-            <h2 className="text-2xl font-semibold">Verifying payment...</h2>
-            <p className="mt-2 text-sm text-muted-foreground">Please wait while we confirm your transaction.</p>
-          </div>
-        )}
-
-        {status === 'success' && (
-          <div className="p-8 bg-muted rounded-lg">
-            <h2 className="text-3xl font-extrabold text-center text-green-600">Payment successful</h2>
-            <p className="mt-2 text-sm text-muted-foreground">Thank you — a confirmation has been sent to your email.</p>
-            <div className="mt-6 flex justify-center">
-              <a href="/store" className="inline-flex items-center px-6 py-2 bg-primary text-white rounded-md">Return to Store</a>
+        <Suspense fallback={
+            <div className="p-8 bg-muted rounded-lg">
+                <h2 className="text-2xl font-semibold">Loading...</h2>
             </div>
-          </div>
-        )}
-
-        {status === 'failed' && (
-          <div className="p-6 bg-muted rounded-lg">
-            <h2 className="text-2xl font-semibold text-red-600">Payment could not be verified</h2>
-            <p className="mt-2 text-sm text-muted-foreground">If you were charged, contact support and provide the reference below.</p>
-            <div className="mt-4 p-4 bg-background rounded">
-              <div className="text-sm">Reference</div>
-              <div className="font-mono mt-1">{reference}</div>
-            </div>
-            <div className="mt-4 flex justify-center gap-3">
-              <button 
-                onClick={() => {
-                  setStatus('verifying');
-                  setError(null);
-                  verify();
-                }} 
-                className="inline-flex items-center px-5 py-2 bg-primary text-white rounded-md hover:bg-primary/90"
-              >
-                Retry Verification
-              </button>
-              <a href="/store" className="inline-flex items-center px-5 py-2 border rounded-md">Return to Store</a>
-            </div>
-          </div>
-        )}
+        }>
+            <CheckoutCompleteContent />
+        </Suspense>
       </div>
     </div>
   );
