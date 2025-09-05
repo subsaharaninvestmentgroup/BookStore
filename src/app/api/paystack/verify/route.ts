@@ -69,7 +69,7 @@ export async function POST(req: Request) {
       };
       
       const saved = await recordOrder(order);
-      await fulfillOrder({ ...order, id: saved.id });
+      await fulfillOrder({ ...order, id: saved.id, date: new Date().toISOString() });
       await createOrUpdateCustomerFromOrder({
         name: customerName,
         email: customerEmail,

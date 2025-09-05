@@ -61,7 +61,8 @@ export default function CheckoutPage() {
   };
 
   const startPaystack = async () => {
-    if (!book || !isFormValid()) {
+    setServerError(null);
+    if (!isFormValid()) {
       if (!email) setServerError('Email is required.');
       if (purchaseFormat === 'physical' && !address) setServerError('Shipping address is required for hard copy.');
       if (purchaseFormat === 'physical' && !phone) setServerError('Contact number is required for hard copy.');
@@ -78,7 +79,7 @@ export default function CheckoutPage() {
         name,
         bookId: book.id,
         address: purchaseFormat === 'physical' ? address : '',
-        phone: purchaseFormat === 'physical' ? phone : '',
+        phone: phone,
         purchaseFormat,
       }
     };
@@ -181,6 +182,18 @@ export default function CheckoutPage() {
                       className="mt-1"
                     />
                   </label>
+                  <label className="block">
+                    <span className="text-sm font-medium">
+                        Contact Number {purchaseFormat === 'physical' && <span className="text-destructive">*</span>}
+                    </span>
+                    <Input 
+                        placeholder="Enter your contact number" 
+                        value={phone} 
+                        onChange={(e) => setPhone((e.target as HTMLInputElement).value)}
+                        className="mt-1"
+                        required={purchaseFormat === 'physical'}
+                    />
+                  </label>
                 </div>
               </div>
               
@@ -191,12 +204,6 @@ export default function CheckoutPage() {
                         placeholder="Enter your shipping address" 
                         value={address} 
                         onChange={(e) => setAddress((e.target as HTMLInputElement).value)}
-                        required
-                    />
-                    <Input 
-                        placeholder="Enter your contact number" 
-                        value={phone} 
-                        onChange={(e) => setPhone((e.target as HTMLInputElement).value)}
                         required
                     />
                 </div>
