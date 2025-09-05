@@ -1,7 +1,7 @@
 import type { SVGProps } from "react";
 
 export function Logo(props: SVGProps<SVGSVGElement>) {
-  const logoImg = "public/subsaharan_logo_black.png";
+  const logoImg = "/subsaharan_logo_black.png";
   return (
     // render the logo image from the public folder
     // props are typed as SVGProps, cast to any so common props (className, width, height, style) can be passed through
