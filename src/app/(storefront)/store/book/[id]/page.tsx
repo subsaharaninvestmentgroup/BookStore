@@ -10,12 +10,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Star, Truck, Upload } from 'lucide-react';
 import { notFound, useRouter } from 'next/navigation';
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion"
 import { getCurrencySymbol, getCachedData, setCachedData } from '@/lib/utils';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -109,39 +103,41 @@ export default function BookPage({ params }: { params: { id: string } }) {
                 </div>
 
                 {/* Details Column */}
-                <div className="lg:col-span-3 space-y-6">
-                    <div className="flex justify-between items-start">
-                        <div>
-                            <h1 className="text-3xl lg:text-4xl font-bold">{book.title}</h1>
-                            <p className="text-lg text-muted-foreground mt-1">by <a href="#" className="text-primary hover:underline">{book.author}</a> | Format: {book.details}</p>
+                <div className="lg:col-span-3 space-y-8">
+                    <div className="space-y-4">
+                        <div className="flex justify-between items-start">
+                            <div>
+                                <h1 className="text-3xl lg:text-4xl font-bold">{book.title}</h1>
+                                <p className="text-lg text-muted-foreground mt-1">by <a href="#" className="text-primary hover:underline">{book.author}</a> | Format: {book.details}</p>
+                            </div>
+                            <Button variant="ghost" size="icon">
+                                <Upload className="h-5 w-5" />
+                            </Button>
                         </div>
-                        <Button variant="ghost" size="icon">
-                            <Upload className="h-5 w-5" />
-                        </Button>
-                    </div>
 
-                    <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-0.5">
-                            {[...Array(5)].map((_, i) => (
-                                <Star 
-                                    key={i} 
-                                    className={`w-5 h-5 ${
-                                        i < Math.round(book.rating?.average || 0)
-                                            ? "fill-yellow-400 text-yellow-400"
-                                            : "fill-gray-200 text-gray-200"
-                                    }`}
-                                />
-                            ))}
+                        <div className="flex items-center gap-4">
+                            <div className="flex items-center gap-0.5">
+                                {[...Array(5)].map((_, i) => (
+                                    <Star 
+                                        key={i} 
+                                        className={`w-5 h-5 ${
+                                            i < Math.round(book.rating?.average || 0)
+                                                ? "fill-yellow-400 text-yellow-400"
+                                                : "fill-gray-200 text-gray-200"
+                                        }`}
+                                    />
+                                ))}
+                            </div>
+                            <span className="text-sm text-muted-foreground">
+                                {book.rating?.average.toFixed(1)} ({book.reviewCount} {book.reviewCount === 1 ? 'review' : 'reviews'})
+                            </span>
+                            <a href="#reviews" onClick={(e) => {
+                                e.preventDefault();
+                                document.getElementById('reviews')?.scrollIntoView({ behavior: 'smooth' });
+                            }} className="text-sm text-primary hover:underline">
+                                {book.reviewCount > 0 ? 'See all reviews' : 'Be the first to review'}
+                            </a>
                         </div>
-                        <span className="text-sm text-muted-foreground">
-                            {book.rating?.average.toFixed(1)} ({book.reviewCount} {book.reviewCount === 1 ? 'review' : 'reviews'})
-                        </span>
-                        <a href="#" onClick={(e) => {
-                            e.preventDefault();
-                            document.querySelector('[data-value="reviews"]')?.scrollIntoView({ behavior: 'smooth' });
-                        }} className="text-sm text-primary hover:underline">
-                            {book.reviewCount > 0 ? 'See all reviews' : 'Be the first to review'}
-                        </a>
                     </div>
                     
                     <Separator />
@@ -154,41 +150,45 @@ export default function BookPage({ params }: { params: { id: string } }) {
                         </blockquote>
                     </article>
 
-                    <Accordion type="single" collapsible className="w-full" defaultValue="details">
-                        <AccordionItem value="details">
-                            <AccordionTrigger className="text-lg font-semibold">Book Details</AccordionTrigger>
-                            <AccordionContent>
-                                <ul className="list-disc pl-5 space-y-2 text-muted-foreground">
-                                    <li>Published Date: {book.publicationDate}</li>
-                                    <li>Format: {book.details}</li>
-                                </ul>
-                            </AccordionContent>
-                        </AccordionItem>
-                        <AccordionItem value="sample">
-                            <AccordionTrigger className="text-lg font-semibold">Sample Text</AccordionTrigger>
-                            <AccordionContent className="whitespace-pre-wrap font-serif text-base">
-                            {book.sampleText || "No sample text available."}
-                            </AccordionContent>
-                        </AccordionItem>
-                         <AccordionItem value="reviews">
-                            <AccordionTrigger className="text-lg font-semibold">
+                    <Separator />
+                    
+                    <div className="space-y-8">
+                        <div>
+                            <h3 className="text-xl font-semibold mb-4">Book Details</h3>
+                            <ul className="list-disc pl-5 space-y-2 text-muted-foreground">
+                                <li>Published Date: {book.publicationDate}</li>
+                                <li>Format: {book.details}</li>
+                            </ul>
+                        </div>
+                        
+                        <Separator />
+
+                        <div>
+                            <h3 className="text-xl font-semibold mb-4">Sample Text</h3>
+                            <p className="whitespace-pre-wrap font-serif text-base text-muted-foreground">
+                                {book.sampleText || "No sample text available."}
+                            </p>
+                        </div>
+                        
+                        <Separator />
+                        
+                        <div id="reviews">
+                            <h3 className="text-xl font-semibold mb-4">
                                 Reviews {book.reviewCount > 0 && `(${book.reviewCount})`}
-                            </AccordionTrigger>
-                            <AccordionContent>
-                                <BookReviews 
-                                    bookId={book.id} 
-                                    initialRating={book.rating}
-                                    onRatingUpdate={(rating) => {
-                                        setBook(prev => prev ? {
-                                            ...prev,
-                                            rating,
-                                            reviewCount: rating.total
-                                        } : null);
-                                    }}
-                                />
-                            </AccordionContent>
-                        </AccordionItem>
-                    </Accordion>
+                            </h3>
+                             <BookReviews 
+                                bookId={book.id} 
+                                initialRating={book.rating}
+                                onRatingUpdate={(rating) => {
+                                    setBook(prev => prev ? {
+                                        ...prev,
+                                        rating,
+                                        reviewCount: rating.total
+                                    } : null);
+                                }}
+                            />
+                        </div>
+                    </div>
                 </div>
 
                 {/* Actions Column */}
