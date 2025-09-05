@@ -193,20 +193,19 @@ export default function BookPage({ params }: { params: { id: string } }) {
 
                 {/* Actions Column */}
                 <div className="lg:col-span-1">
-                    <Card className="sticky top-24 shadow-lg">
-                        <CardContent className="p-4 grid gap-4">
-                            <div className="text-3xl font-bold">{currencySymbol}{book.price.toFixed(2)}</div>
-                            <Separator />
-                            <div className="flex flex-col gap-2">
-                                <Button size="lg" className="w-full" onClick={() => router.push(`/store/checkout?bookId=${book?.id}`)}>Add to Cart</Button>
-                                <Button size="lg" variant="secondary" className="w-full">Buy Now</Button>
-                            </div>
-                            <div className="flex items-center gap-2 text-sm text-muted-foreground pt-2">
-                                <Truck className="h-4 w-4" />
-                                <span>Free shipping on orders over {currencySymbol}50</span>
-                            </div>
-                        </CardContent>
-                    </Card>
+                    <div className="sticky top-24 space-y-6 rounded-lg border border-border bg-card p-6">
+                        <div className="text-3xl font-bold">{currencySymbol}{book.price.toFixed(2)}</div>
+                        
+                        <div className="flex flex-col gap-2">
+                            <Button size="lg" className="w-full" onClick={() => router.push(`/store/checkout?bookId=${book?.id}`)}>Add to Cart</Button>
+                            <Button size="lg" variant="secondary" className="w-full">Buy Now</Button>
+                        </div>
+                        <Separator />
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Truck className="h-4 w-4" />
+                            <span>Free shipping on orders over {currencySymbol}50</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
