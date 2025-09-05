@@ -1,0 +1,167 @@
+diff --git a/node_modules/nodemailer/lib/nodemailer.js b/node_modules/nodemailer/lib/nodemailer.js
+index 906263b..d35583b 100644
+--- a/node_modules/nodemailer/lib/nodemailer.js
++++ b/node_modules/nodemailer/lib/nodemailer.js
+@@ -21,7 +21,6 @@ const wellKnown = require('./well-known');
+ const Mail = require('./mailer');
+ const shared = require('./shared');
+ const SMTPTransport = require('./smtp-transport');
+-const SendmailTransport = require('./sendmail-transport');
+ const StreamTransport = require('./stream-transport');
+ const JSONTransport = require('./json-transport');
+ const SESTransport = require('./ses-transport');
+@@ -48,9 +47,6 @@
+         return new SMTPTransport(options);
+     } else if (options.sendmail) {
+         return new SendmailTransport(options);
+-    } else if (options.sendmail === true || typeof options.sendmail === 'string') {
+-        let sendmailPath = typeof options.sendmail === 'string' ? options.sendmail : false;
+-        return new SendmailTransport({ path: sendmailPath });
+     } else if (options.streamTransport) {
+         return new StreamTransport(options);
+     } else if (options.jsonTransport) {
+diff --git a/node_modules/nodemailer/lib/sendmail-transport/index.js b/node_modules/nodemailer/lib/sendmail-transport/index.js
+deleted file mode 100644
+index 2898ad3..0000000
+--- a/node_modules/nodemailer/lib/sendmail-transport/index.js
++++ /dev/null
+@@ -1,139 +0,0 @@
+-'use strict';
+-
+-const spawn = require('child_process').spawn;
+-const packageData = require('../../package.json');
+-const shared = require('../shared');
+-
+-/**
+- * @namespace Sendmail Transport
+- */
+-
+-/**
+- * Generates a Transport object for Sendmail
+- *
+- * @constructor
+- * @param {Object} options Options object
+- * @param {String} [options.path="/usr/sbin/sendmail"] path to the sendmail command
+- * @param {Boolean} [options.newline="\\n"] either 'windows' or 'unix'
+- * @param {Array} [options.args] An array of arguments to pass to the sendmail command
+- */
+-class SendmailTransport {
+-    constructor(options) {
+-        options = options || {};
+-
+-        this.options = options;
+-
+-        this.name = 'Sendmail';
+-        this.version = packageData.version;
+-
+-        this.path = options.path || '/usr/sbin/sendmail';
+-        this.args = options.args || false;
+-        this.winbreak = ['win', 'windows', 'dos', '\r\n'].includes((options.newline || '').toString().toLowerCase());
+-    }
+-
+-    /**
+-     * <p>Compiles a mail message and forwards it to handler that sends it.</p>
+-     *
+-     * @param {Object} mail Mail object
+-     * @param {Function} callback Callback function to run when the sending is completed
+-     */
+-    send(mail, callback) {
+-        // Sendmail specific keys. Most of these are probably not used by anyone.
+-        let sendmailSpecific = ['path', 'args', 'dsn'];
+-
+-        // remove specific keys
+-        Object.keys(mail.data || {}).forEach(key => {
+-            if (sendmailSpecific.includes(key)) {
+-                delete mail.data[key];
+-            }
+-        });
+-
+-        let envelope = mail.data.envelope || mail.message.getEnvelope();
+-        let messageId = mail.message.messageId();
+-
+-        // force all addresses to be absolute
+-        for (let i = 0, len = envelope.to.length; i < len; i++) {
+-            if (/@/.test(envelope.to[i])) {
+-                // is an address
+-                envelope.to[i] = envelope.to[i].replace(/^.*</, '').replace(/>.*$/, '');
+-            }
+-        }
+-
+-        //Recipient addresses can be given as a commandline option in the "-t" format
+-        //(the addresses are parsed from the message headers)
+-        //or as a list of addresses following the command.
+-        let args;
+-        if (this.args) {
+-            // We have a list of arguments, use them instead of the envelope
+-            args = [].concat(this.args);
+-        } else {
+-            args = ['-i']; // default to ignoring dots
+-            if (mail.data.dsn) {
+-                args.push(
+-                    '-N',
+-                    // if dsn is a string, use it as is
+-                    (typeof mail.data.dsn === 'string' && mail.data.dsn) ||
+-                        // otherwise build the value from the object
+-                        [].concat(Object.keys(mail.data.dsn || {})).join(',')
+-                );
+-            }
+-            // use envelope from address
+-            args.push('-f', envelope.from);
+-            envelope.to.forEach(addr => {
+-                args.push(addr);
+-            });
+-        }
+-
+-        let sendmail = spawn(this.path, args);
+-
+-        let stream = mail.message.createReadStream();
+-        let stderr = '';
+-        let stdout = '';
+-        let returned = false;
+-
+-        sendmail.on(
+-            'exit',
+-            shared.logFunc(mail.message.logger, 'DEBUG', 'Process exited with code %s', code => {
+-                if (returned) {
+-                    return;
+-                }
+-                returned = true;
+-                let err;
+-                if (code) {
+-                    err = new Error('Sendmail exited with code ' + code);
+-                    if (stderr) {
+-                        err.message += '\n' + stderr;
+-                    }
+-                    return callback(err);
+-                } else {
+-                    return callback(null, {
+-                        envelope,
+-                        messageId,
+-                        response: stdout
+-                    });
+-                }
+-            })
+-        );
+-
+-        sendmail.on('error', err => {
+-            if (returned) {
+-                return;
+-            }
+-            returned = true;
+-            callback(err);
+-        });
+-
+-        sendmail.stdout.on('data', chunk => {
+-            stdout += (chunk || '').toString();
+-        });
+-
+-        sendmail.stderr.on('data', chunk => {
+-            stderr += (chunk || '').toString();
+-        });
+-
+-        stream.pipe(sendmail.stdin);
+-    }
+-}
+-
+-module.exports = SendmailTransport;
++module.exports = null;

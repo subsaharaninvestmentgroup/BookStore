@@ -51,10 +51,7 @@ export const getCachedData = (key: string) => {
 
 export const clearCache = (key: string) => {
     try {
-        const item = sessionStorage.getItem(key);
-        if (item) {
-            sessionStorage.removeItem(key);
-        }
+        sessionStorage.removeItem(key);
     } catch (error) {
         console.error(`Error clearing cache for key: ${key}`, error);
     }
