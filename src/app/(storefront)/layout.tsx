@@ -39,14 +39,9 @@ export default function StorefrontLayout({
                 <span className="sr-only">Bookstore</span>
               </Link>
               <Link href="/store/all-books" className="hover:text-foreground">
-                All Books
+                Explore more Books
               </Link>
-              <Link href="#" className="text-muted-foreground hover:text-foreground">
-                Fiction
-              </Link>
-              <Link href="#" className="text-muted-foreground hover:text-foreground">
-                Non-Fiction
-              </Link>
+            
             </nav>
           </SheetContent>
         </Sheet>
@@ -78,9 +73,9 @@ export default function StorefrontLayout({
         <div className="container mx-auto px-4 md:px-6 py-6 flex flex-col md:flex-row justify-between items-center">
             <div className="flex items-center gap-2">
                 <Logo className="h-6 w-6" />
-                <span className="font-semibold">Bookstore</span>
+                <span className="font-semibold">SubSaharan Investment Link Group</span>
             </div>
-            <p className="text-sm text-muted-foreground mt-4 md:mt-0">© 2024 Bookstore Inc. All rights reserved.</p>
+            <p className="text-sm text-muted-foreground mt-4 md:mt-0">© SubSaharan Investment Link Group. All rights reserved.</p>
         </div>
       </footer>
     </div>
