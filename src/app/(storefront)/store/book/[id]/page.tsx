@@ -17,7 +17,7 @@ import { BookReviews } from '@/components/store/book-reviews';
 import { useToast } from '@/hooks/use-toast';
 
 
-export default function BookPage({ params }: { params: { id: string } }) {
+export default function BookPage({ params: { id: bookId } }: { params: { id: string } }) {
     const [book, setBook] = React.useState<Book | null>(null);
     const [loading, setLoading] = React.useState(true);
     const [currencySymbol, setCurrencySymbol] = React.useState('$');
@@ -30,7 +30,6 @@ export default function BookPage({ params }: { params: { id: string } }) {
     }, []);
 
     React.useEffect(() => {
-        const bookId = params.id;
         if (!bookId) return;
 
         const fetchBook = async () => {
@@ -64,7 +63,7 @@ export default function BookPage({ params }: { params: { id: string } }) {
         };
 
         fetchBook();
-    }, [params]);
+    }, [bookId]);
 
     const handleShare = async () => {
         if (!book) return;
