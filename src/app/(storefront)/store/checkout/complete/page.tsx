@@ -10,49 +10,50 @@ export default function CheckoutComplete() {
   const [status, setStatus] = React.useState<'pending' | 'success' | 'failed' | 'verifying'>('verifying');
   const [error, setError] = React.useState<any>(null);
 
-  React.useEffect(() => {
+  const verify = async () => {
     if (!reference) {
       setStatus('failed');
       setError('No payment reference found');
       return;
     }
 
-    const verify = async () => {
-      try {
-        console.log('Verifying transaction:', reference);
-        const res = await fetch('/api/paystack/verify', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            reference,
-            metadata: {
-              email: localStorage.getItem('checkout_email'),
-              name: localStorage.getItem('checkout_name'),
-              bookId: localStorage.getItem('checkout_bookId'),
-              address: localStorage.getItem('checkout_address'),
-              purchaseFormat: localStorage.getItem('checkout_purchaseFormat'),
-            }
-          }),
-        });
-        const data = await res.json();
-        console.log('Verify response:', data);
-        
-        if (data && data.success) {
-          setStatus('success');
-          setError(null);
-        } else {
-          console.warn('Verify failed:', data);
-          setStatus('failed');
-          setError(data);
-        }
-      } catch (err) {
-        console.error('Verify error:', err);
+    try {
+      console.log('Verifying transaction:', reference);
+      const res = await fetch('/api/paystack/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          reference,
+          metadata: {
+            email: localStorage.getItem('checkout_email'),
+            name: localStorage.getItem('checkout_name'),
+            bookId: localStorage.getItem('checkout_bookId'),
+            address: localStorage.getItem('checkout_address'),
+            purchaseFormat: localStorage.getItem('checkout_purchaseFormat'),
+          }
+        }),
+      });
+      const data = await res.json();
+      console.log('Verify response:', data);
+      
+      if (data && data.success) {
+        setStatus('success');
+        setError(null);
+      } else {
+        console.warn('Verify failed:', data);
         setStatus('failed');
-        setError(String(err));
+        setError(data);
       }
-    };
+    } catch (err) {
+      console.error('Verify error:', err);
+      setStatus('failed');
+      setError(String(err));
+    }
+  };
+
+  React.useEffect(() => {
     verify();
-  }, [reference]);
+  }, []);
 
   return (
     <div className="container mx-auto p-8">
@@ -83,6 +84,16 @@ export default function CheckoutComplete() {
               <div className="font-mono mt-1">{reference}</div>
             </div>
             <div className="mt-4 flex justify-center gap-3">
+              <button 
+                onClick={() => {
+                  setStatus('verifying');
+                  setError(null);
+                  verify();
+                }} 
+                className="inline-flex items-center px-5 py-2 bg-primary text-white rounded-md hover:bg-primary/90"
+              >
+                Retry Verification
+              </button>
               <a href="/store" className="inline-flex items-center px-5 py-2 border rounded-md">Return to Store</a>
             </div>
           </div>
