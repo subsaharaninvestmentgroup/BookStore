@@ -127,17 +127,28 @@ export async function createOrUpdateCustomerFromOrder(details: { name: string, e
         if (querySnapshot.empty) {
             // Customer does not exist, create a new one
             const newCustomerRef = doc(customersRef);
-            transaction.set(newCustomerRef, {
+            const newCustomerData = {
                 id: newCustomerRef.id,
-                name: details.name,
+                name: details.name || 'Customer',
                 email: details.email,
                 phone: details.phone || '',
                 joinDate: new Date().toISOString().split('T')[0],
                 totalOrders: 1,
                 totalSpent: details.amount,
-                address: details.address,
+                address: details.address || '',
                 isAdmin: false,
-            });
+            } as const;
+
+            // Create a new object with only defined values
+            const cleanCustomerData = Object.entries(newCustomerData)
+                .reduce((acc, [key, value]) => {
+                    if (value !== undefined) {
+                        acc[key] = value;
+                    }
+                    return acc;
+                }, {} as Record<string, any>);
+
+            transaction.set(newCustomerRef, cleanCustomerData);
         } else {
             // Customer exists, update their record
             const customerDoc = querySnapshot.docs[0];
@@ -147,12 +158,16 @@ export async function createOrUpdateCustomerFromOrder(details: { name: string, e
             const newTotalOrders = (currentData.totalOrders || 0) + 1;
             const newTotalSpent = (currentData.totalSpent || 0) + details.amount;
 
-            transaction.update(customerRef, {
+            const updateData: Record<string, any> = {
                 totalOrders: newTotalOrders,
                 totalSpent: newTotalSpent,
-                address: details.address || currentData.address, // Update address if provided
-                phone: details.phone || currentData.phone // Update phone if provided
-            });
+            };
+
+            // Only include address and phone if they are provided and not undefined/null
+            if (details.address) updateData.address = details.address;
+            if (details.phone) updateData.phone = details.phone;
+
+            transaction.update(customerRef, updateData);
         }
     });
 }
