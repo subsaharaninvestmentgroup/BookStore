@@ -12,6 +12,7 @@ import { saveCompanyEmailAction, saveAdminCodeAction } from '@/app/actions';
 import { db } from '@/lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import { Skeleton } from '../ui/skeleton';
+import { RefreshCw } from 'lucide-react';
 
 const CURRENCIES = [
     { value: 'USD', label: '$ USD' },
@@ -60,6 +61,11 @@ export default function Settings() {
 
         fetchSettings();
     }, [toast]);
+
+    const handleGenerateCode = () => {
+        const newCode = Math.random().toString(36).substring(2, 10).toUpperCase();
+        setAdminCode(newCode);
+    }
 
     const handleSaveSettings = async () => {
         setIsSaving(true);
@@ -155,13 +161,24 @@ export default function Settings() {
                             </div>
                              <div className="space-y-2">
                                 <Label htmlFor="adminCode">Admin Registration Code</Label>
-                                <Input
-                                    id="adminCode"
-                                    type="text"
-                                    placeholder="Enter a secret code for admin signup"
-                                    value={adminCode}
-                                    onChange={(e) => setAdminCode(e.target.value)}
-                                />
+                                <div className="flex items-center gap-2">
+                                    <Input
+                                        id="adminCode"
+                                        type="text"
+                                        placeholder="Enter a secret code for admin signup"
+                                        value={adminCode}
+                                        onChange={(e) => setAdminCode(e.target.value)}
+                                        className="flex-grow"
+                                    />
+                                     <Button
+                                        variant="outline"
+                                        size="icon"
+                                        onClick={handleGenerateCode}
+                                        aria-label="Generate new code"
+                                    >
+                                        <RefreshCw className="h-4 w-4" />
+                                    </Button>
+                                </div>
                                 <p className="text-sm text-muted-foreground">
                                     Users who sign up with this code will be granted admin privileges.
                                 </p>
