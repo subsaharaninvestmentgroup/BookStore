@@ -179,7 +179,8 @@ export default function Customers() {
         }
 
         try {
-            const querySnapshot = await getDocs(collection(db, 'customers'));
+            const q = query(collection(db, 'customers'), where('isAdmin', '!=', true));
+            const querySnapshot = await getDocs(q);
             const customersData = querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })) as Customer[];
             setCustomers(customersData);
             setCachedData('customers', customersData);
@@ -215,7 +216,6 @@ export default function Customers() {
           <TableHeader>
             <TableRow>
               <TableHead>Name</TableHead>
-              <TableHead className="hidden sm:table-cell">Role</TableHead>
               <TableHead className="hidden md:table-cell">Total Orders</TableHead>
               <TableHead className="text-right">Total Spent</TableHead>
               <TableHead>
@@ -226,7 +226,7 @@ export default function Customers() {
           <TableBody>
             {loading ? (
                 <TableRow>
-                    <TableCell colSpan={5} className="text-center">
+                    <TableCell colSpan={4} className="text-center">
                         <div className="flex justify-center items-center p-4">
                             <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
                         </div>
@@ -240,9 +240,6 @@ export default function Customers() {
                         <AvatarFallback>{customer.name.charAt(0)}</AvatarFallback>
                     </Avatar>
                     {customer.name}
-                </TableCell>
-                <TableCell className="hidden sm:table-cell">
-                    <Badge variant={customer.isAdmin ? 'default' : 'secondary'}>{customer.isAdmin ? 'Admin' : 'Customer'}</Badge>
                 </TableCell>
                 <TableCell className="hidden md:table-cell">{customer.totalOrders}</TableCell>
                 <TableCell className="text-right">{currencySymbol}{customer.totalSpent.toFixed(2)}</TableCell>
@@ -264,7 +261,7 @@ export default function Customers() {
               </TableRow>
             )) : (
               <TableRow>
-                  <TableCell colSpan={5} className="text-center">
+                  <TableCell colSpan={4} className="text-center">
                     No customers found.
                   </TableCell>
                 </TableRow>

@@ -17,6 +17,7 @@ import {
   AlertTriangle,
   Store,
   Settings as SettingsIcon,
+  Shield,
 } from 'lucide-react';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { useRouter } from 'next/navigation';
@@ -40,6 +41,7 @@ import Orders from '@/components/dashboard/orders';
 import Customers from '@/components/dashboard/customers';
 import Banners from '@/components/dashboard/banners';
 import Settings from '@/components/dashboard/settings';
+import Admins from '@/components/dashboard/admins';
 import { Logo } from '@/components/icons';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -52,7 +54,7 @@ import { doc, getDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { checkApiStatusAction } from './actions';
 
-type View = 'overview' | 'orders' | 'books' | 'customers' | 'book-form' | 'banners' | 'banner-form' | 'settings';
+type View = 'overview' | 'orders' | 'books' | 'customers' | 'book-form' | 'banners' | 'banner-form' | 'settings' | 'admins';
 
 export default function DashboardPage() {
   const [activeView, setActiveView] = React.useState<View>('overview');
@@ -132,6 +134,8 @@ export default function DashboardPage() {
         return <Books onAddBook={() => handleShowBookForm()} onEditBook={handleShowBookForm} />;
       case 'customers':
         return <Customers />;
+      case 'admins':
+        return <Admins />;
       case 'book-form':
         return <BookForm bookId={editingBookId} onSaveSuccess={handleBackToBooks} onCancel={handleBackToBooks} />;
       case 'banners':
@@ -150,6 +154,7 @@ export default function DashboardPage() {
     { name: 'orders', label: 'Orders', icon: ShoppingCart },
     { name: 'books', label: 'Books', icon: Book },
     { name: 'customers', label: 'Customers', icon: Users },
+    { name: 'admins', label: 'Admins', icon: Shield },
     { name: 'banners', label: 'Banners', icon: GalleryHorizontal },
     { name: 'settings', label: 'Settings', icon: SettingsIcon },
   ];

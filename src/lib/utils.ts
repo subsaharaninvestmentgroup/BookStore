@@ -20,6 +20,7 @@ const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
 export const setCachedData = (key: string, data: any) => {
   try {
+    if (typeof window === 'undefined' || !window.sessionStorage) return;
     const item = {
       data: data,
       timestamp: new Date().getTime(),
@@ -32,6 +33,7 @@ export const setCachedData = (key: string, data: any) => {
 
 export const getCachedData = (key: string) => {
   try {
+    if (typeof window === 'undefined' || !window.sessionStorage) return null;
     const itemStr = sessionStorage.getItem(key);
     if (!itemStr) {
       return null;
@@ -51,6 +53,7 @@ export const getCachedData = (key: string) => {
 
 export const clearCache = (key: string) => {
     try {
+        if (typeof window === 'undefined' || !window.sessionStorage) return;
         sessionStorage.removeItem(key);
     } catch (error) {
         console.error(`Error clearing cache for key: ${key}`, error);
