@@ -17,12 +17,13 @@ import { createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, up
 import { auth, db } from "@/lib/firebase";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
-import { doc, setDoc } from "firebase/firestore";
+import { doc, setDoc, getDoc } from "firebase/firestore";
 
 export default function SignupPage() {
     const [name, setName] = React.useState('');
     const [email, setEmail] = React.useState('');
     const [password, setPassword] = React.useState('');
+    const [adminCode, setAdminCode] = React.useState('');
     const router = useRouter();
     const { toast } = useToast();
 
@@ -33,6 +34,25 @@ export default function SignupPage() {
             const user = userCredential.user;
             await updateProfile(user, { displayName: name });
             
+            let isAdmin = false;
+            if (adminCode) {
+                const settingsRef = doc(db, 'storeSettings', 'main');
+                const settingsSnap = await getDoc(settingsRef);
+                if (settingsSnap.exists() && settingsSnap.data().adminCode === adminCode) {
+                    isAdmin = true;
+                    toast({
+                        title: 'Admin Access Granted',
+                        description: 'Your account has been created with admin privileges.',
+                    });
+                } else {
+                    toast({
+                        variant: 'destructive',
+                        title: 'Invalid Admin Code',
+                        description: 'You have been registered as a regular customer.',
+                    });
+                }
+            }
+
             // Create a customer entry in Firestore
             await setDoc(doc(db, "customers", user.uid), {
                 id: user.uid,
@@ -42,7 +62,7 @@ export default function SignupPage() {
                 totalOrders: 0,
                 totalSpent: 0,
                 address: '',
-                isAdmin: false,
+                isAdmin: isAdmin,
             });
 
             router.push('/');
@@ -127,6 +147,16 @@ export default function SignupPage() {
                     required 
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="adminCode">Admin Code (Optional)</Label>
+                <Input 
+                    id="adminCode" 
+                    type="text" 
+                    placeholder="Enter admin code for admin access" 
+                    value={adminCode}
+                    onChange={(e) => setAdminCode(e.target.value)}
                 />
               </div>
               <Button type="submit" className="w-full">

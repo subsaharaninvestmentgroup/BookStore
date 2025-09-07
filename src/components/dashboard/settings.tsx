@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { saveCompanyEmailAction } from '@/app/actions';
+import { saveCompanyEmailAction, saveAdminCodeAction } from '@/app/actions';
 import { db } from '@/lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import { Skeleton } from '../ui/skeleton';
@@ -23,6 +23,7 @@ const CURRENCIES = [
 export default function Settings() {
     const [currency, setCurrency] = React.useState('ZAR');
     const [companyEmail, setCompanyEmail] = React.useState('');
+    const [adminCode, setAdminCode] = React.useState('');
     const [isSaving, setIsSaving] = React.useState(false);
     const [isLoading, setIsLoading] = React.useState(true);
     const { toast } = useToast();
@@ -40,6 +41,9 @@ export default function Settings() {
                     const settingsData = settingsSnap.data();
                     if (settingsData.companyEmail) {
                         setCompanyEmail(settingsData.companyEmail);
+                    }
+                    if (settingsData.adminCode) {
+                        setAdminCode(settingsData.adminCode);
                     }
                 }
             } catch (error) {
@@ -61,23 +65,24 @@ export default function Settings() {
         setIsSaving(true);
         localStorage.setItem('bookstore-currency', currency);
 
-        if (companyEmail) {
-            const result = await saveCompanyEmailAction(companyEmail);
-            if (!result.success) {
-                toast({
-                    variant: 'destructive',
-                    title: 'Error Saving Company Email',
-                    description: result.error,
-                });
-                setIsSaving(false);
-                return;
-            }
+        const emailPromise = saveCompanyEmailAction(companyEmail);
+        const adminCodePromise = saveAdminCodeAction(adminCode);
+
+        const [emailResult, adminCodeResult] = await Promise.all([emailPromise, adminCodePromise]);
+
+        if (!emailResult.success || !adminCodeResult.success) {
+            toast({
+                variant: 'destructive',
+                title: 'Error Saving Settings',
+                description: emailResult.error || adminCodeResult.error || "An unknown error occurred.",
+            });
+        } else {
+            toast({
+                title: 'Success',
+                description: 'Settings saved successfully. Changes will be reflected across the app.',
+            });
         }
 
-        toast({
-            title: 'Success',
-            description: 'Settings saved successfully. Changes will be reflected across the app.',
-        });
         setIsSaving(false);
 
         // Optionally, force a reload to ensure all components update
@@ -95,11 +100,11 @@ export default function Settings() {
             <Card>
                 <CardHeader>
                     <CardTitle>Configuration</CardTitle>
-                    <CardDescription>Manage store preferences.</CardDescription>
+                    <CardDescription>Manage store preferences and security.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     {isLoading ? (
-                         <div className="space-y-6 max-w-xl">
+                         <div className="space-y-8 max-w-xl">
                             <div className="space-y-2">
                                 <Skeleton className="h-4 w-20" />
                                 <Skeleton className="h-10 w-[180px]" />
@@ -110,10 +115,15 @@ export default function Settings() {
                                 <Skeleton className="h-10 w-full" />
                                 <Skeleton className="h-4 w-64" />
                             </div>
+                            <div className="space-y-2">
+                                <Skeleton className="h-4 w-20" />
+                                <Skeleton className="h-10 w-full" />
+                                <Skeleton className="h-4 w-64" />
+                            </div>
                             <Skeleton className="h-10 w-28" />
                          </div>
                     ) : (
-                        <div className="space-y-6 max-w-xl">
+                        <div className="space-y-8 max-w-xl">
                             <div className="space-y-2">
                                 <Label htmlFor="currency">Currency</Label>
                                 <Select value={currency} onValueChange={setCurrency}>
@@ -141,6 +151,19 @@ export default function Settings() {
                                 />
                                 <p className="text-sm text-muted-foreground">
                                     The email address to receive order confirmations.
+                                </p>
+                            </div>
+                             <div className="space-y-2">
+                                <Label htmlFor="adminCode">Admin Registration Code</Label>
+                                <Input
+                                    id="adminCode"
+                                    type="text"
+                                    placeholder="Enter a secret code for admin signup"
+                                    value={adminCode}
+                                    onChange={(e) => setAdminCode(e.target.value)}
+                                />
+                                <p className="text-sm text-muted-foreground">
+                                    Users who sign up with this code will be granted admin privileges.
                                 </p>
                             </div>
                             <Button onClick={handleSaveSettings} disabled={isSaving}>

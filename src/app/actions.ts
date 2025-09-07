@@ -48,3 +48,14 @@ export async function saveCompanyEmailAction(email: string): Promise<{ success: 
         return { success: false, error: error.message };
     }
 }
+
+export async function saveAdminCodeAction(code: string): Promise<{ success: boolean, error?: string }> {
+    try {
+        const settingsRef = doc(db, 'storeSettings', 'main');
+        await setDoc(settingsRef, { adminCode: code }, { merge: true });
+        return { success: true };
+    } catch (error: any) {
+        console.error('Failed to save admin code:', error);
+        return { success: false, error: error.message };
+    }
+}
