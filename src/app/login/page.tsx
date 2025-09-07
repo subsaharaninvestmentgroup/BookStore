@@ -10,10 +10,10 @@ import {
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Logo, GoogleIcon } from "@/components/icons"
+import { Logo } from "@/components/icons"
 import Link from "next/link"
 import * as React from 'react';
-import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, signOut } from "firebase/auth"
+import { signInWithEmailAndPassword, signOut } from "firebase/auth"
 import { auth, db } from "@/lib/firebase"
 import { useRouter } from "next/navigation"
 import { useToast } from "@/hooks/use-toast";
@@ -54,20 +54,6 @@ export default function LoginPage() {
             });
         }
     };
-    
-    const handleGoogleSignIn = async () => {
-        const provider = new GoogleAuthProvider();
-        try {
-            const result = await signInWithPopup(auth, provider);
-            await checkAdminAndRedirect(result.user.uid);
-        } catch (error: any) {
-            toast({
-                variant: 'destructive',
-                title: 'Google Sign-In Failed',
-                description: error.message,
-            });
-        }
-    }
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-background">
@@ -118,10 +104,6 @@ export default function LoginPage() {
               </Button>
             </div>
           </form>
-          <Button variant="outline" className="w-full mt-4" onClick={handleGoogleSignIn}>
-            <GoogleIcon className="mr-2 h-4 w-4" />
-            Login with Google
-          </Button>
           <div className="mt-4 text-center text-sm">
             Don&apos;t have an account?{" "}
             <Link href="/signup" className="underline">

@@ -10,10 +10,10 @@ import {
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Logo, GoogleIcon } from "@/components/icons"
+import { Logo } from "@/components/icons"
 import Link from "next/link"
 import * as React from 'react';
-import { createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, updateProfile } from "firebase/auth";
+import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { auth, db } from "@/lib/firebase";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
@@ -74,34 +74,6 @@ export default function SignupPage() {
             });
         }
     };
-    
-    const handleGoogleSignIn = async () => {
-        const provider = new GoogleAuthProvider();
-        try {
-            const result = await signInWithPopup(auth, provider);
-            const user = result.user;
-            
-            // Create a customer entry in Firestore
-            await setDoc(doc(db, "customers", user.uid), {
-                id: user.uid,
-                name: user.displayName,
-                email: user.email,
-                joinDate: new Date().toISOString().split('T')[0],
-                totalOrders: 0,
-                totalSpent: 0,
-                address: '', // Google sign-in doesn't provide address
-                isAdmin: false,
-            }, { merge: true }); // Merge to avoid overwriting if user already exists from email signup
-
-            router.push('/');
-        } catch (error: any) {
-            toast({
-                variant: 'destructive',
-                title: 'Google Sign-In Failed',
-                description: error.message,
-            });
-        }
-    }
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-background">
@@ -164,10 +136,6 @@ export default function SignupPage() {
               </Button>
             </div>
           </form>
-          <Button variant="outline" className="w-full mt-4" onClick={handleGoogleSignIn}>
-            <GoogleIcon className="mr-2 h-4 w-4" />
-            Sign up with Google
-          </Button>
           <div className="mt-4 text-center text-sm">
             Already have an account?{" "}
             <Link href="/login" className="underline">
