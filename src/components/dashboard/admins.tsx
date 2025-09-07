@@ -133,7 +133,6 @@ export default function Admins() {
                     <DropdownMenuContent align="end">
                       <DropdownMenuLabel>Actions</DropdownMenuLabel>
                       <DropdownMenuItem onSelect={() => demoteAdmin(admin.id)}>Demote to Customer</DropdownMenuItem>
-                      <DropdownMenuItem>Send Email</DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </TableCell>
