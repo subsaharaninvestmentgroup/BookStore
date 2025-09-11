@@ -192,7 +192,7 @@ export default function Books({ onAddBook, onEditBook }: BooksProps) {
                 </span>
               </Button>
               <Button asChild size="sm" variant="outline" className="h-8 gap-1 w-full sm:w-auto">
-                <Link href="/store">
+                <Link href="/store" target="_blank">
                     <Store className="h-3.5 w-3.5" />
                     <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
                     View Storefront
