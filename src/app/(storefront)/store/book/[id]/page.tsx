@@ -55,10 +55,8 @@ export async function generateMetadata(
       description: book.description,
       images: [book.imageUrl, ...previousImages],
       type: 'book',
-      book: {
-          authors: [book.author],
-          releaseDate: book.publicationDate,
-      }
+      bookAuthors: [book.author],
+      bookReleaseDate: book.publicationDate,
     },
   }
 }
