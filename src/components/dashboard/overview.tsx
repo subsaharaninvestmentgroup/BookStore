@@ -31,7 +31,7 @@ import { collection, getDocs, limit, orderBy, query } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Order, Book } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { getCurrencySymbol, getCachedData, setCachedData } from '@/lib/utils';
+import { getCurrencySymbol, getCachedData, setCachedData, getStoreCurrency } from '@/lib/utils';
 
 const chartData = [
   { month: "January", total: 0 },
@@ -67,8 +67,9 @@ export default function Overview() {
   const [currencySymbol, setCurrencySymbol] = React.useState('$');
 
   React.useEffect(() => {
-    const savedCurrency = localStorage.getItem('bookstore-currency') || 'ZAR';
-    setCurrencySymbol(getCurrencySymbol(savedCurrency));
+    getStoreCurrency().then(currency => {
+        setCurrencySymbol(getCurrencySymbol(currency));
+    });
 
     const fetchData = async () => {
       setLoading(true);

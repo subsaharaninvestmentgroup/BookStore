@@ -40,7 +40,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
-import { getCurrencySymbol, getCachedData, setCachedData } from '@/lib/utils';
+import { getCurrencySymbol, getCachedData, setCachedData, getStoreCurrency } from '@/lib/utils';
 
 const CustomerDetailSheet = ({ customer, open, onOpenChange, currencySymbol }: { customer: Customer | null; open: boolean; onOpenChange: (open: boolean) => void, currencySymbol: string }) => {
     const [customerOrders, setCustomerOrders] = React.useState<Order[]>([]);
@@ -166,8 +166,9 @@ export default function Customers() {
   const [currencySymbol, setCurrencySymbol] = React.useState('$');
 
   React.useEffect(() => {
-    const savedCurrency = localStorage.getItem('bookstore-currency') || 'USD';
-    setCurrencySymbol(getCurrencySymbol(savedCurrency));
+    getStoreCurrency().then(currency => {
+        setCurrencySymbol(getCurrencySymbol(currency));
+    });
 
     const fetchCustomers = async () => {
         setLoading(true);

@@ -8,11 +8,12 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { saveCompanyEmailAction, saveAdminCodeAction } from '@/app/actions';
+import { saveCompanyEmailAction, saveAdminCodeAction, saveCurrencyAction } from '@/app/actions';
 import { db } from '@/lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import { Skeleton } from '../ui/skeleton';
 import { RefreshCw } from 'lucide-react';
+import { clearCache } from '@/lib/utils';
 
 const CURRENCIES = [
     { value: 'USD', label: '$ USD' },
@@ -30,9 +31,6 @@ export default function Settings() {
     const { toast } = useToast();
 
     React.useEffect(() => {
-        const savedCurrency = localStorage.getItem('bookstore-currency') || 'ZAR';
-        setCurrency(savedCurrency);
-
         const fetchSettings = async () => {
             setIsLoading(true);
             try {
@@ -45,6 +43,9 @@ export default function Settings() {
                     }
                     if (settingsData.adminCode) {
                         setAdminCode(settingsData.adminCode);
+                    }
+                    if (settingsData.currency) {
+                        setCurrency(settingsData.currency);
                     }
                 }
             } catch (error) {
@@ -69,24 +70,25 @@ export default function Settings() {
 
     const handleSaveSettings = async () => {
         setIsSaving(true);
-        localStorage.setItem('bookstore-currency', currency);
-
+        
         const emailPromise = saveCompanyEmailAction(companyEmail);
         const adminCodePromise = saveAdminCodeAction(adminCode);
+        const currencyPromise = saveCurrencyAction(currency);
 
-        const [emailResult, adminCodeResult] = await Promise.all([emailPromise, adminCodePromise]);
+        const [emailResult, adminCodeResult, currencyResult] = await Promise.all([emailPromise, adminCodePromise, currencyPromise]);
 
-        if (!emailResult.success || !adminCodeResult.success) {
+        if (!emailResult.success || !adminCodeResult.success || !currencyResult.success) {
             toast({
                 variant: 'destructive',
                 title: 'Error Saving Settings',
-                description: emailResult.error || adminCodeResult.error || "An unknown error occurred.",
+                description: emailResult.error || adminCodeResult.error || currencyResult.error || "An unknown error occurred.",
             });
         } else {
             toast({
                 title: 'Success',
                 description: 'Settings saved successfully. Changes will be reflected across the app.',
             });
+            clearCache('storeCurrency');
         }
 
         setIsSaving(false);

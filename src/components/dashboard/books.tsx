@@ -38,7 +38,7 @@ import { collection, deleteDoc, doc, getDocs } from 'firebase/firestore';
 import { deleteObject, ref } from 'firebase/storage';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
-import { getCurrencySymbol, getCachedData, setCachedData, clearCache } from '@/lib/utils';
+import { getCurrencySymbol, getCachedData, setCachedData, clearCache, getStoreCurrency } from '@/lib/utils';
 
 type BooksProps = {
     onAddBook: () => void;
@@ -53,8 +53,9 @@ export default function Books({ onAddBook, onEditBook }: BooksProps) {
   const [currencySymbol, setCurrencySymbol] = React.useState('$');
 
   React.useEffect(() => {
-    const savedCurrency = localStorage.getItem('bookstore-currency') || 'ZAR';
-    setCurrencySymbol(getCurrencySymbol(savedCurrency));
+    getStoreCurrency().then(currency => {
+        setCurrencySymbol(getCurrencySymbol(currency));
+    });
   }, []);
 
   const fetchBooks = React.useCallback(async () => {

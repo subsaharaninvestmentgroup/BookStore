@@ -5,7 +5,7 @@ import { db } from '@/lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
-import { getCurrencySymbol } from '@/lib/utils';
+import { getCurrencySymbol, getStoreCurrency } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
 import { BookReviews } from '@/components/store/book-reviews';
 import { BookPageActions } from '@/components/store/book-page-actions';
@@ -70,8 +70,7 @@ export default async function BookPage({ params }: { params: { id: string } }) {
         notFound();
     }
     
-    // In a real app, you'd get this from user settings or a similar source
-    const currency = 'ZAR'; 
+    const currency = await getStoreCurrency(); 
     const currencySymbol = getCurrencySymbol(currency);
     
     const productJsonLd = {

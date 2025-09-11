@@ -40,7 +40,7 @@ import {
 import { db } from '@/lib/firebase';
 import { collection, getDocs, doc, updateDoc, query, orderBy } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
-import { getCurrencySymbol, getCachedData, setCachedData, clearCache } from '@/lib/utils';
+import { getCurrencySymbol, getCachedData, setCachedData, clearCache, getStoreCurrency } from '@/lib/utils';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '../ui/sheet';
 import { Separator } from '../ui/separator';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '../ui/dialog';
@@ -178,8 +178,9 @@ export default function Orders() {
   const [orderToUpdate, setOrderToUpdate] = React.useState<Order | null>(null);
 
   React.useEffect(() => {
-    const savedCurrency = localStorage.getItem('bookstore-currency') || 'USD';
-    setCurrencySymbol(getCurrencySymbol(savedCurrency));
+    getStoreCurrency().then(currency => {
+        setCurrencySymbol(getCurrencySymbol(currency));
+    });
   }, []);
 
   const fetchOrders = React.useCallback(async () => {

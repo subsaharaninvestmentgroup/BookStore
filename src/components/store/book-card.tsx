@@ -6,7 +6,7 @@ import type { Book } from '@/lib/types';
 import { Card, CardContent } from '@/components/ui/card';
 import Image from 'next/image';
 import Link from 'next/link';
-import { getCurrencySymbol } from '@/lib/utils';
+import { getCurrencySymbol, getStoreCurrency } from '@/lib/utils';
 
 type BookCardProps = {
     book: Book;
@@ -16,8 +16,9 @@ export function BookCard({ book }: BookCardProps) {
     const [currencySymbol, setCurrencySymbol] = React.useState('$');
 
     React.useEffect(() => {
-        const savedCurrency = localStorage.getItem('bookstore-currency') || 'ZAR';
-        setCurrencySymbol(getCurrencySymbol(savedCurrency));
+        getStoreCurrency().then(currency => {
+            setCurrencySymbol(getCurrencySymbol(currency));
+        });
     }, []);
 
     return (

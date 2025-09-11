@@ -1,6 +1,8 @@
 
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
+import { db } from "./firebase";
+import { doc, getDoc } from "firebase/firestore";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -58,4 +60,25 @@ export const clearCache = (key: string) => {
     } catch (error) {
         console.error(`Error clearing cache for key: ${key}`, error);
     }
+}
+
+export async function getStoreCurrency(): Promise<string> {
+    const cachedCurrency = getCachedData('storeCurrency');
+    if (cachedCurrency) {
+        return cachedCurrency;
+    }
+
+    try {
+        const settingsRef = doc(db, 'storeSettings', 'main');
+        const settingsSnap = await getDoc(settingsRef);
+        if (settingsSnap.exists() && settingsSnap.data().currency) {
+            const currency = settingsSnap.data().currency;
+            setCachedData('storeCurrency', currency);
+            return currency;
+        }
+    } catch (error) {
+        console.error("Could not fetch store currency setting:", error);
+    }
+    // Return a default currency if fetching fails
+    return 'ZAR';
 }
