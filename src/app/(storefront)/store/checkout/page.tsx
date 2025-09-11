@@ -8,7 +8,7 @@ import { doc, getDoc } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
-import { getCurrencySymbol } from '@/lib/utils';
+import { getCurrencySymbol, getStoreCurrency } from '@/lib/utils';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 
@@ -24,9 +24,19 @@ function CheckoutForm() {
   const [email, setEmail] = React.useState('');
   const [address, setAddress] = React.useState('');
   const [phone, setPhone] = React.useState('');
-  const [currency, setCurrency] = React.useState('ZAR');
+  const [currency, setCurrency] = React.useState('');
+  const [currencySymbol, setCurrencySymbol] = React.useState('');
   const [purchaseFormat, setPurchaseFormat] = React.useState<PurchaseFormat>('physical');
   const [serverError, setServerError] = React.useState<string | null>(null);
+  
+  React.useEffect(() => {
+    const fetchStoreCurrency = async () => {
+      const storeCurrency = await getStoreCurrency();
+      setCurrency(storeCurrency);
+      setCurrencySymbol(getCurrencySymbol(storeCurrency));
+    };
+    fetchStoreCurrency();
+  }, []);
 
   React.useEffect(() => {
     if (!bookId) return;
@@ -116,7 +126,7 @@ function CheckoutForm() {
     }
   };
 
-  if (loading) return <div className="container mx-auto p-8">Loading...</div>;
+  if (loading || !currency) return <div className="container mx-auto p-8">Loading...</div>;
   if (!book) return <div className="container mx-auto p-8">Book not found.</div>;
 
   return (
@@ -214,20 +224,8 @@ function CheckoutForm() {
                 <h2 className="text-lg font-semibold mb-4">Payment Details</h2>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="text-sm font-medium">Currency</label>
-                    <select 
-                      className="mt-1 w-full h-10 px-3 rounded-md border border-input bg-background" 
-                      value={currency} 
-                      onChange={(e) => setCurrency((e.target as HTMLSelectElement).value)}
-                    >
-                      <option value="ZAR">ZAR (R)</option>
-                      <option value="USD">USD ($)</option>
-                      <option value="EUR">EUR (€)</option>
-                    </select>
-                  </div>
-                  <div className="flex flex-col justify-end">
-                    <span className="text-sm font-medium">Total</span>
-                    <span className="text-2xl font-bold">{getCurrencySymbol(currency)}{book.price.toFixed(2)}</span>
+                    <label className="text-sm font-medium">Total Amount</label>
+                    <span className="text-2xl font-bold block">{currencySymbol}{book.price.toFixed(2)}</span>
                   </div>
                 </div>
               </div>
@@ -243,7 +241,7 @@ function CheckoutForm() {
                 disabled={!isFormValid()} 
                 className="w-full h-12 text-base font-medium"
               >
-                {isFormValid() ? `Pay ${getCurrencySymbol(currency)}${book.price.toFixed(2)}` : 'Complete required fields'}
+                {isFormValid() ? `Pay ${currencySymbol}${book.price.toFixed(2)}` : 'Complete required fields'}
               </Button>
             </div>
           </div>
@@ -257,7 +255,7 @@ function CheckoutForm() {
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Subtotal</span>
-                    <span>{getCurrencySymbol(currency)}{book.price.toFixed(2)}</span>
+                    <span>{currencySymbol}{book.price.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Shipping</span>
@@ -265,7 +263,7 @@ function CheckoutForm() {
                   </div>
                   <div className="pt-2 border-t flex justify-between font-medium">
                     <span>Total</span>
-                    <span>{getCurrencySymbol(currency)}{book.price.toFixed(2)}</span>
+                    <span>{currencySymbol}{book.price.toFixed(2)}</span>
                   </div>
                 </div>
               </div>
