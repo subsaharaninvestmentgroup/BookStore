@@ -303,16 +303,16 @@ export function BookReviews({ bookId, initialRating, reviewCount }: BookReviewsP
             </div>
           </div>
 
-          <div className="space-y-2">
+            <div className="space-y-2">
             <label className="text-sm font-medium">Your Review*</label>
             <Textarea
               required
               value={userReview.comment}
               onChange={(e) => setUserReview((prev) => ({ ...prev, comment: e.target.value }))}
-              placeholder="What did you like or dislike? What did you use this product for?"
+              placeholder="What did you enjoy or dislike about this book? Would you recommend it to others?"
               rows={4}
             />
-          </div>
+            </div>
 
           <Button type="submit" disabled={submitting} className="w-full sm:w-auto">
             {submitting ? 'Submitting...' : 'Submit Review'}
