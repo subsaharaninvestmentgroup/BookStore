@@ -35,7 +35,7 @@ export async function generateMetadata(
   { params }: Props,
   parent: ResolvingMetadata
 ): Promise<Metadata> {
-  const id = params.id
+  const { id } = await params;
   const book = await getBook(id);
 
   if (!book) {
@@ -62,7 +62,8 @@ export async function generateMetadata(
 }
 
 export default async function BookPage({ params }: { params: { id: string } }) {
-    const book = await getBook(params.id);
+    const { id } = await params;
+    const book = await getBook(id);
 
     if (!book) {
         notFound();
@@ -153,10 +154,7 @@ export default async function BookPage({ params }: { params: { id: string } }) {
                                     <span className="text-sm text-muted-foreground">
                                         {book.rating?.average.toFixed(1)} ({book.reviewCount} {book.reviewCount === 1 ? 'review' : 'reviews'})
                                     </span>
-                                    <a href="#reviews" onClick={(e) => {
-                                        e.preventDefault();
-                                        document.getElementById('reviews')?.scrollIntoView({ behavior: 'smooth' });
-                                    }} className="text-sm text-primary hover:underline">
+                                    <a href="#reviews" className="text-sm text-primary hover:underline">
                                         {book.reviewCount > 0 ? 'See all reviews' : 'Be the first to review'}
                                     </a>
                                 </div>
