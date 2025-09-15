@@ -64,6 +64,7 @@ export type Order = {
   customerPhone?: string;
   items: OrderItem[];
   amount: number;
+  quantity?: number; // Total quantity across all items (single-item orders convenience)
   paymentStatus: 'Paid' | 'Pending' | 'Failed';
   shippingStatus: 'Shipped' | 'Processing' | 'Delivered' | 'Cancelled';
   date: string;
@@ -72,6 +73,11 @@ export type Order = {
   digital?: boolean;
   purchaseFormat?: PurchaseFormat;
   trackingUrl?: string;
+  // Email/notification status flags (optional to allow backward compatibility)
+  confirmationEmailSent?: boolean;
+  digitalDeliveryEmailSent?: boolean;
+  lastEmailAttemptAt?: string; // ISO timestamp
+  emailError?: string; // Last error message encountered while attempting emails
 };
 
 export type Customer = {

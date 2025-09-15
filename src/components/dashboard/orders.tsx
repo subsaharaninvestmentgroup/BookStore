@@ -2,7 +2,7 @@
 'use client';
 
 import * as React from 'react';
-import { MoreHorizontal, File, X, ShoppingCart, User, Mail, Home, CreditCard, ArrowUpDown } from 'lucide-react';
+import { MoreHorizontal, File, X, ShoppingCart, User, Mail, Home, CreditCard, ArrowUpDown, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 import type { Order } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -137,6 +137,68 @@ const OrderDetailSheet = ({ order, open, onOpenChange, currencySymbol }: { order
                                     <a href={order.trackingUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline text-sm truncate max-w-[200px]">
                                         {order.trackingUrl}
                                     </a>
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+
+                    <Card>
+                        <CardHeader className="flex flex-row items-center gap-4">
+                             <Mail className="w-8 h-8 text-muted-foreground" />
+                            <div>
+                                <CardTitle>Email Status</CardTitle>
+                            </div>
+                        </CardHeader>
+                        <CardContent className="text-sm space-y-2">
+                            <div className="flex justify-between items-center">
+                                <span className="text-muted-foreground">Order Confirmation</span>
+                                <div className="flex items-center gap-2">
+                                    {order.confirmationEmailSent ? (
+                                        <>
+                                            <CheckCircle className="w-4 h-4 text-green-600" />
+                                            <span className="text-green-600">Sent</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <XCircle className="w-4 h-4 text-gray-400" />
+                                            <span className="text-gray-400">Not sent</span>
+                                        </>
+                                    )}
+                                </div>
+                            </div>
+                            {order.digital && (
+                                <div className="flex justify-between items-center">
+                                    <span className="text-muted-foreground">Digital Delivery</span>
+                                    <div className="flex items-center gap-2">
+                                        {order.digitalDeliveryEmailSent ? (
+                                            <>
+                                                <CheckCircle className="w-4 h-4 text-green-600" />
+                                                <span className="text-green-600">Sent</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <XCircle className="w-4 h-4 text-gray-400" />
+                                                <span className="text-gray-400">Not sent</span>
+                                            </>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+                            {order.emailError && (
+                                <div className="flex justify-between items-center">
+                                    <span className="text-muted-foreground">Last Error</span>
+                                    <div className="flex items-center gap-2">
+                                        <AlertCircle className="w-4 h-4 text-red-500" />
+                                        <span className="text-red-500 text-xs truncate max-w-[150px]" title={order.emailError}>
+                                            {order.emailError}
+                                        </span>
+                                    </div>
+                                </div>
+                            )}
+                            {order.lastEmailAttemptAt && (
+                                <div className="flex justify-between items-center">
+                                    <span className="text-muted-foreground">Last Attempt</span>
+                                    <span className="text-xs">{new Date(order.lastEmailAttemptAt).toLocaleString()}</span>
                                 </div>
                             )}
                         </CardContent>
@@ -304,6 +366,9 @@ export default function Orders() {
               <TableHead className="hidden sm:table-cell">
                   Shipping
               </TableHead>
+              <TableHead className="hidden lg:table-cell">
+                  Emails
+              </TableHead>
               <TableHead className="hidden md:table-cell">
                   Date
               </TableHead>
@@ -316,7 +381,7 @@ export default function Orders() {
           <TableBody>
             {loading ? (
                  <TableRow>
-                    <TableCell colSpan={5} className="text-center">
+                    <TableCell colSpan={6} className="text-center">
                         <div className="flex justify-center items-center p-4">
                             <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
                         </div>
@@ -350,6 +415,31 @@ export default function Orders() {
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
+                  <TableCell className="hidden lg:table-cell">
+                    <div className="flex items-center gap-1">
+                        <div title="Order confirmation sent">
+                            {order.confirmationEmailSent ? (
+                                <CheckCircle className="w-4 h-4 text-green-600" />
+                            ) : (
+                                <XCircle className="w-4 h-4 text-gray-400" />
+                            )}
+                        </div>
+                        {order.digital && (
+                            <div title={order.digitalDeliveryEmailSent ? "Digital delivery sent" : "Digital delivery not sent"}>
+                                {order.digitalDeliveryEmailSent ? (
+                                    <CheckCircle className="w-4 h-4 text-blue-600" />
+                                ) : (
+                                    <XCircle className="w-4 h-4 text-gray-400" />
+                                )}
+                            </div>
+                        )}
+                        {order.emailError && (
+                            <div title={`Email error: ${order.emailError}`}>
+                                <AlertCircle className="w-4 h-4 text-red-500" />
+                            </div>
+                        )}
+                    </div>
+                  </TableCell>
                   <TableCell className="hidden md:table-cell">
                       {new Date(order.date).toLocaleString()}
                   </TableCell>
@@ -372,7 +462,7 @@ export default function Orders() {
               </TableRow>
             )) : (
               <TableRow>
-                <TableCell colSpan={5} className="text-center">No orders found.</TableCell>
+                <TableCell colSpan={6} className="text-center">No orders found.</TableCell>
               </TableRow>
             )}
           </TableBody>
